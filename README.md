@@ -16,8 +16,8 @@ $ pip install -e .
 $ pip install -e .[testing]
 ```
 
-## 3. Ejecute example command
+## 3. Run example command
 ```bash
-# path final_proyect_alignment/ ejecute:
+# path final_proyect_alignment/ run:
 $ python src/project_alignment_optimizer/main.py 10
 ```
