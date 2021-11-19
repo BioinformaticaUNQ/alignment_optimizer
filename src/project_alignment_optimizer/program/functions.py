@@ -1,4 +1,4 @@
-import variables as var
+import program.variables as var
 
 
 # ---------------------

@@ -2,6 +2,7 @@ import pytest
 
 from project_alignment_optimizer.main import main
 from project_alignment_optimizer.fib_model import fib
+from project_alignment_optimizer import fib_model
 
 __author__ = "ItuFede"
 __copyright__ = "ItuFede"

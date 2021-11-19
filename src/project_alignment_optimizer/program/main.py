@@ -1,5 +1,5 @@
-import variables as var
-import functions as func
+import program.variables as var
+import program.functions as func
 import argparse
 
 
