@@ -21,3 +21,9 @@ $ pip install -e .[testing]
 # path final_proyect_alignment/ run:
 $ python src/project_alignment_optimizer/main.py 10
 ```
+
+## 4. Run tests
+```bash
+# run tests with python version 3.8
+$ tox -e py38
+```

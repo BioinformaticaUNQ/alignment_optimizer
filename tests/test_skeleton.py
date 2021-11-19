@@ -1,6 +1,7 @@
 import pytest
 
-from project_alignment_optimizer.skeleton import fib, main
+from project_alignment_optimizer.main import main
+from project_alignment_optimizer.fib_model import fib
 
 __author__ = "ItuFede"
 __copyright__ = "ItuFede"

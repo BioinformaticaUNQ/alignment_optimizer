@@ -3,7 +3,7 @@ import logging
 import sys
 
 from project_alignment_optimizer import __version__
-from fib_model import fib
+from project_alignment_optimizer.fib_model import fib
 
 __author__ = "-"
 __copyright__ = "-"
@@ -16,22 +16,28 @@ _logger = logging.getLogger(__name__)
 def parse_args(args):
     parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
     parser.add_argument(
+        "-v",
         "--version",
         action="version",
-        version="ejemplo_setuptools_tox {ver}".format(ver=__version__),
+        version="example_version: {version}".format(version=__version__),
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
     parser.add_argument(
-        "-v",
-        "--verbose",
+        dest="number",
+        help="number-th Fibonacci number",
+        type=int,
+        metavar="INT"
+    )
+    parser.add_argument(
+        "-vi",
+        "--verbose_info",
         dest="loglevel",
         help="set loglevel to INFO",
         action="store_const",
         const=logging.INFO,
     )
     parser.add_argument(
-        "-vv",
-        "--very-verbose",
+        "-vd",
+        "--verbose_debug",
         dest="loglevel",
         help="set loglevel to DEBUG",
         action="store_const",
@@ -52,7 +58,7 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    print("The {}-th Fibonacci number is {}".format(args.n, fib(args.n)))
+    print("The {}-th Fibonacci number is {}".format(args.number, fib(args.number)))
     _logger.info("Script ends here")
 
 def run():
