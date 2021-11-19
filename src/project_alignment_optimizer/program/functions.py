@@ -1,4 +1,5 @@
 import variables as var
+import logging as log
 
 
 # ---------------------
@@ -11,17 +12,19 @@ def configureVariables():
 
 def loadFile():
   # Obtengo el archivo con el alineamiento inicial
-  printAndLog("Solicito Variables")
+  printAndLog("Solicito el archivo")
+  return []
 
 def calculateScore(alignment):
   finalScore = 0
-  for u in range(0,len(alignment)):
-    for v in range(u+1,len(alignment)):
-      finalScore += calculateScorePar(alignment[u],alignment[v])
+#  for u in range(0,len(alignment)):
+#    for v in range(u+1,len(alignment)):
+#      finalScore += calculateScorePar(alignment[u],alignment[v])
   return finalScore
 
 def filterAlignment(alignment):
   # Filtro el alineamiento pasado por parametro
+  # Aca usamos lo de las secuencias homologas
   newAlignment = alignment
   return newAlignment
 
@@ -61,16 +64,16 @@ def scorePar(u,v):
 def nucleotideCost(u,v):
     match = var.match()
     mismatch = var.mismatch()
-    gap = var.gap()
+    gap = var.gapPenalty()
     if (u == v):
-        if(u == "_"):
+        if(u == "-"):
             return 0
         return match
     else:
-        if(u == "_" or v == "_"):
+        if(u == "-" or v == "-"):
             return gap
         return mismatch
 
 def printAndLog(msg):
     print(msg)
-    # Guardo en el log el msg
+    log.info(msg)

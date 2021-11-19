@@ -1,7 +1,15 @@
 import variables as var
 import functions as func
-import argparse
+import logging as log
 
+# ---------------------
+# Logs
+# ---------------------
+log.basicConfig(filename='alignment_optimizer.log', encoding='utf-8', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
+log.debug('Probando debug')
+log.info('Probando info')
+log.warning('Probando warning')
+log.error('Probando error')
 
 # ---------------------
 # Variables
@@ -18,8 +26,7 @@ tree = []
 # Programa Principal
 # ---------------------
 
-def main(args):
-    args = argparse.parse_args(args)
+def main():
 
     # Configuro las variables
     # --- Todo esto se lo tenemos que pedir al usuario y comentar cuales son los valores por defecto ---
@@ -47,7 +54,9 @@ def main(args):
 
     # Genero nuevos alineamientos y sus scores correspondientes 
     # mientras aumente el score actual o llegue al minimo de secuencias
-    while(currentScore > lastScore or len(currentAlignment) >= var.nMinSequences()):
+    nmin = 7 #var.nMinSequences()
+    print(var.nMinSequences())
+    while(currentScore > lastScore or len(currentAlignment) >= nmin):
         lastAlignment = currentAlignment
         lastScore = currentScore
         currentAlignment = func.filterAlignment(lastAlignment)
@@ -58,3 +67,10 @@ def main(args):
     # Genero el árbol filogenético y lo retorno
     tree = func.generateTree(currentAlignment)
     return tree
+
+
+if __name__ == '__main__':
+    main()
+
+# Para correrlo:
+# python src/project_alignment_optimizer/program/main.py
