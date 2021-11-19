@@ -1,86 +1,88 @@
 # Variables
 # ---------------------
+class Var():
+    def __init__(self):
 
-# Define la puntuacion a tener en cuenta para el calculo del score
-match = 1
-mismatch = -1
-gapPenalty = -1
+        # Define la puntuacion a tener en cuenta para el calculo del score
+        self._match = 1
+        self._mismatch = -1
+        self._gapPenalty = -1
 
-# Define el formato en el que recibiremos el archivo con el alineamiento inicial, siendo:
-# 0 -> fasta
-# 1 -> ???
-fileFormat = 0
+        # Define el formato en el que recibiremos el archivo con el alineamiento inicial, siendo:
+        # 0 -> fasta
+        # 1 -> ???
+        self._fileFormat = 0
 
-# Define el numero minimo de secuencias que tiene que tener el alineamiento
-nMinSequences = 25
+        # Define el numero minimo de secuencias que tiene que tener el alineamiento
+        self._nMinSequences = 25
 
-# Define la posicion en el array de la Secuencia Query
-querySequence = 0
+        # Define la posicion en el array de la Secuencia Query
+        self._querySequence = 0
 
-# Define de donde obtendremos las secuencias homologas, siendo:
-# 0 -> Base de datos local del usuario
-# 1 -> BLAST
-dbHomologousSequences = 0
+        # Define de donde obtendremos las secuencias homologas, siendo:
+        # 0 -> Base de datos local del usuario
+        # 1 -> BLAST
+        self._dbHomologousSequences = 0
 
-# Define de donde obtendremos las secuencias homologas de BLAST, siendo:
-# 0 -> corriendo de forma local
-# 1 -> corriendo desde la API ENTREZ
-dbBlast = 0
-
-
-# ---------------------
-# Setters
-# ---------------------
-
-def setMatch(m):
-    match = m
-
-def setMismatch(mm):
-    mismatch = mm
-
-def setGapPenalty(gap):
-    gapPenalty = gap
-
-def setFileFormat(ff):
-    fileFormat = ff
-
-def setNMinSequences(nMin):
-    nMinSequences = nMin
-
-def setQuerySequence(qs):
-    querySequence = qs
-
-def setDbHomologousSequences(db):
-    dbHomologousSequences = db
-
-def setDbBlast(db):
-    dbBlast = db
+        # Define de donde obtendremos las secuencias homologas de BLAST, siendo:
+        # 0 -> corriendo de forma local
+        # 1 -> corriendo desde la API ENTREZ
+        self._dbBlast = 0
 
 
-# ---------------------
-# Getters
-# ---------------------
+    # ---------------------
+    # Setters
+    # ---------------------
 
-def match():
-    return match
+    def setMatch(self,m):
+        self._match = m
 
-def mismatch():
-    return mismatch
+    def setMismatch(self,mm):
+        self._mismatch = mm
 
-def gapPenalty():
-    return gapPenalty
+    def setGapPenalty(self,gap):
+        self._gapPenalty = gap
 
-def fileFormat():
-    return fileFormat
+    def setFileFormat(self,ff):
+        self._fileFormat = ff
 
-def nMinSequences():
-    return nMinSequences
+    def setNMinSequences(self,nMin):
+        self._nMinSequences = nMin
 
-def querySequence():
-    return querySequence
+    def setQuerySequence(self,qs):
+        self._querySequence = qs
 
-def dbHomologousSequences():
-    return dbHomologousSequences
+    def setDbHomologousSequences(self,db):
+        self._dbHomologousSequences = db
 
-def dbBlast():
-    return dbBlast
+    def setDbBlast(self,db):
+        self._dbBlast = db
+
+
+    # ---------------------
+    # Getters
+    # ---------------------
+
+    def match(self):
+        return self._match
+
+    def mismatch(self):
+        return self._mismatch
+
+    def gapPenalty(self):
+        return self._gapPenalty
+
+    def fileFormat(self):
+        return self._fileFormat
+
+    def nMinSequences(self):
+        return self._nMinSequences
+
+    def querySequence(self):
+        return self._querySequence
+
+    def dbHomologousSequences(self):
+        return self._dbHomologousSequences
+
+    def dbBlast(self):
+        return self._dbBlast
