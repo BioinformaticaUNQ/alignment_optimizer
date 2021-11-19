@@ -1,11 +1,11 @@
-import variables as var
+from variables import Var
 import functions as func
 import logging as log
 
 # ---------------------
 # Logs
 # ---------------------
-log.basicConfig(filename='alignment_optimizer.log', encoding='utf-8', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
+log.basicConfig(filename='alignment_optimizer.log', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
 log.debug('Probando debug')
 log.info('Probando info')
 log.warning('Probando warning')
@@ -54,8 +54,7 @@ def main():
 
     # Genero nuevos alineamientos y sus scores correspondientes 
     # mientras aumente el score actual o llegue al minimo de secuencias
-    nmin = 7 #var.nMinSequences()
-    print(var.nMinSequences())
+    nmin = Var().nMinSequences()
     while(currentScore > lastScore or len(currentAlignment) >= nmin):
         lastAlignment = currentAlignment
         lastScore = currentScore

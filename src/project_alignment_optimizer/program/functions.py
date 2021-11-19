@@ -58,10 +58,10 @@ def calculateScorePar(sequences):
 def scorePar(u,v):
   score = 0
   for i in range(0,len(u)):
-    score += nucleotideCost(u[i],v[i])
+    score += compareCost(u[i],v[i])
   return score
 
-def nucleotideCost(u,v):
+def compareCost(u,v):
     match = var.match()
     mismatch = var.mismatch()
     gap = var.gapPenalty()
