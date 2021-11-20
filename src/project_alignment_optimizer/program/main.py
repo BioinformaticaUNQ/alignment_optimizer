@@ -1,6 +1,7 @@
-import program.variables as Var
-import program.functions as func
+from variables import Var
+import functions as func
 import logging as log
+
 
 # ---------------------
 # Logs
@@ -10,16 +11,6 @@ log.debug('Probando debug')
 log.info('Probando info')
 log.warning('Probando warning')
 log.error('Probando error')
-
-# ---------------------
-# Variables
-# ---------------------
-lastScore = 0
-currentScore = 0
-lastAlignment = []
-currenAlignment = []
-originalSequences = []
-tree = []
 
 
 # ---------------------
@@ -33,33 +24,33 @@ def main():
     func.configureVariables()
 
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
-    currentAlignment = func.loadFile()
-
-    # Calculo el score del alineamiento inicial
-    currentScore = func.calculateScore(currentAlignment)
-
-    # Guardo el alineamiento inicial y su score como ultimo alineamiento
-    lastAlignment = currentAlignment
-    lastScore = currentScore
-
-    # Realizo el filtrado de secuencias
-    currentAlignment = func.filterAlignment(lastAlignment)
+    lastAlignment = func.loadFile()
 
     # Obtengo las secuencias originales
-    originalSequences = func.getOriginalSequences(currentAlignment)
-   
+    originalSequences = func.getOriginalSequences(lastAlignment)
+
+    # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
+    # Este alineamiento lo descarto, ya que no me sirve
+    lastAlignmentAux = func.generateAlignment(originalSequences)
+    lastScore = func.calculateScore(lastAlignmentAux)
+
+    # Realizo el filtrado de secuencias del alineamiento inicial pasado por el usuario
+    aligmentFiltered = func.filterAlignment(lastAlignment)
+
+    # Obtengo las secuencias originales
+    originalSequences = func.getOriginalSequences(aligmentFiltered)
+
     # Genero el nuevo alineamiento y calculo su score
     currentAlignment = func.generateAlignment(originalSequences)
     currentScore = func.calculateScore(currentAlignment)
 
     # Genero nuevos alineamientos y sus scores correspondientes 
     # mientras aumente el score actual o llegue al minimo de secuencias
-    nmin = Var().nMinSequences()
-    while(currentScore > lastScore or len(currentAlignment) >= nmin):
+    while(currentScore > lastScore or len(currentAlignment) >= Var().nMinSequences()):
         lastAlignment = currentAlignment
         lastScore = currentScore
-        currentAlignment = func.filterAlignment(lastAlignment)
-        originalSequences = func.getOriginalSequences(currentAlignment)
+        aligmentFiltered = func.filterAlignment(lastAlignment)
+        originalSequences = func.getOriginalSequences(aligmentFiltered)
         currentAlignment = func.generateAlignment(originalSequences)
         currentScore = func.calculateScore(currentAlignment)
 
