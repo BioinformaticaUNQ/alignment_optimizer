@@ -1,8 +1,10 @@
-import project_alignment_optimizer.program.variables as var
+import variables as Var
 import logging as log
-
-
-# ---------------------
+from Bio import SeqIO
+import os
+import sys
+# -------------------
+# --
 # Funciones Principales
 # ---------------------
 
@@ -10,11 +12,28 @@ def configureVariables():
   # Pido por consola todas las variables a utilizar por el sistema
   printAndLog("Solicito Variables")
 
-def loadFile():
+def loadFile(filename):
+  # Validar path
+  # Validar formato
   # Obtengo el archivo con el alineamiento inicial
-  # Validar el archivo
-  printAndLog("Solicito el archivo")
-  return []
+  checkIsValidPath(filename)
+  with open(filename, "r") as handle:
+    fasta = SeqIO.parse(handle, "fasta")
+    if (any(fasta)):
+      printAndLog("Getting alignments")
+      sequences=[]
+      for f in fasta:
+        seq = str(f.seq)
+        sequences.append(seq)
+      printAndLog(str(len(sequences))+" alignments were obtained correctly")
+      return sequences
+    else:
+        print("Invalid file format")
+
+def checkIsValidPath(filename):
+   if not os.path.isfile(filename):
+      print("Invalid file path")
+      sys.exit()
 
 def calculateScore(alignment):
   # Sacar el score del alineamiento obtenido por CLUSTAL
