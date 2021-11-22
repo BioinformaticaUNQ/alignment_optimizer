@@ -1,4 +1,4 @@
-from variables import Var
+import project_alignment_optimizer.program.variables as var
 import logging as log
 
 
