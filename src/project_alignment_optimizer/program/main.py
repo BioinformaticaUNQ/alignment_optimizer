@@ -1,8 +1,11 @@
+# coding=utf-8
+
 from variables import Var
 import functions as func
 import logging as log
 import argparse
 import sys
+
 
 # ---------------------
 # Logs
@@ -20,11 +23,15 @@ log.error('Probando error')
 
 def main(args):
 
+    # Inicializo las variables:
+    var = Var()
+
     # Configuro las variables
     # --- Todo esto se lo tenemos que pedir al usuario y comentar cuales son los valores por defecto ---
     func.configureVariables()
     arg = getArgs(args)
     file = arg.file
+    # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     lastAlignment = func.loadFile(file)
 
     # Obtengo las secuencias originales
@@ -37,7 +44,7 @@ def main(args):
 
     # Realizo el filtrado de secuencias del alineamiento inicial pasado por el usuario
     aligmentFiltered = func.filterAlignment(lastAlignment)
-
+    
     # Obtengo las secuencias originales
     originalSequences = func.getOriginalSequences(aligmentFiltered)
 
@@ -45,9 +52,9 @@ def main(args):
     currentAlignment = func.generateAlignment(originalSequences)
     currentScore = func.calculateScore(currentAlignment)
 
-    # Genero nuevos alineamientos y sus scores correspondientes
+    # Genero nuevos alineamientos y sus scores correspondientes 
     # mientras aumente el score actual o llegue al minimo de secuencias
-    while(currentScore > lastScore or len(currentAlignment) >= Var().nMinSequences()):
+    while(currentScore > lastScore or len(currentAlignment) > var.nMinSequences()):
         lastAlignment = currentAlignment
         lastScore = currentScore
         aligmentFiltered = func.filterAlignment(lastAlignment)
@@ -55,6 +62,7 @@ def main(args):
         currentAlignment = func.generateAlignment(originalSequences)
         currentScore = func.calculateScore(currentAlignment)
 
+    print(len(currentAlignment))
     # Genero el árbol filogenético y lo retorno
     tree = func.generateTree(currentAlignment)
     return tree

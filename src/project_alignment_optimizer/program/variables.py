@@ -14,7 +14,7 @@ class Var():
         self._fileFormat = 0
 
         # Define el numero minimo de secuencias que tiene que tener el alineamiento
-        self._nMinSequences = 25
+        self._nMinSequences = 35
 
         # Define la posicion en el array de la Secuencia Query
         self._querySequence = 0
