@@ -1,3 +1,4 @@
+import pathlib
 # Variables
 # ---------------------
 class Var():
@@ -29,6 +30,7 @@ class Var():
         # 1 -> corriendo desde la API ENTREZ
         self._dbBlast = 0
 
+        self._clustalWPath = str(pathlib.Path(__file__).parent.parent.parent.parent.resolve()) + "/clustalw2"
 
     # ---------------------
     # Setters
@@ -58,6 +60,9 @@ class Var():
     def setDbBlast(self,db):
         self._dbBlast = db
 
+    def setClustalWPath(self,aPath):
+        self._clustalWPath = aPath
+
 
     # ---------------------
     # Getters
@@ -83,6 +88,9 @@ class Var():
 
     def dbHomologousSequences(self):
         return self._dbHomologousSequences
+
+    def clustalWPath(self):
+        return self._clustalWPath
 
     def dbBlast(self):
         return self._dbBlast
