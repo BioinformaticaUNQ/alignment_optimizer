@@ -15,9 +15,13 @@ import sys
 # ---------------------
 
 
-def configureVariables():
+
+def configureVariables(variables,min_seq,gap,query_seq):
     # Pido por consola todas las variables a utilizar por el sistema
     printAndLog("Solicito Variables")
+    variables.setNMinSequences(min_seq)
+    variables.setGapPenalty(gap)
+    variables.setQuerySequence(query_seq)
 
 
 def loadFile(filename):
