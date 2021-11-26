@@ -5,6 +5,7 @@ import logging as log
 import pathlib
 from Bio import SeqIO
 from Bio import AlignIO
+from Bio import Align
 from Bio.Align.Applications import ClustalwCommandline
 import re
 import os
@@ -54,22 +55,28 @@ def filterAlignment(anAlignment):
     # (Mas adelante, en esta funcion tambien usamos lo de las secuencias homologas)
     mostGappedSeq = anAlignment[0]
     for sequence in anAlignment:
-        mostGappedSeq = mostGapped(mostGappedSeq, sequence)
-    printAndLog("Sequence {id} has been removed from the alignment.".format(id=mostGappedSeq.id))
-    sequences = []
-    for sequenceRecord in anAlignment:
-        sequenceRecord.seq = sequenceRecord.seq.ungap()
-        sequences.append(sequenceRecord)
+        mostGappedSeq = mostGapped(mostGappedSeq, sequence,anAlignment[0])
+    printAndLog("Sequence {id} has been removed from the alignment.".format(
+        id=mostGappedSeq.id))
 
-    sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, sequences))
+    sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
     printAndLog(str(len(sequences)) + " sequences left.")
     return sequences
 
 
-def mostGapped(aSequence, anotherSequence):
+def mostGapped(aSequence, anotherSequence, aQuerySequence):
     # Obtengo la secuencia con mayor cantidad de gaps
     if gaps(aSequence) > gaps(anotherSequence):
         return aSequence
+    elif gaps(aSequence) == gaps(anotherSequence):
+        aligner = Align.PairwiseAligner()
+        alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
+        alignment2 = aligner.align(anotherSequence.seq.ungap(),aQuerySequence.seq.ungap())
+        if alignment1.score > alignment2.score:
+            return aSequence
+        else:
+            return anotherSequence
+
     else:
         return anotherSequence
 
@@ -96,16 +103,17 @@ def generateAlignmentAndCalculateScore(originalSequences):
     # Genero el nuevo alineamiento por medio de CLUSTAL
     tempDir = str(pathlib.Path(__file__).parent.resolve())
     SeqIO.write(originalSequences, (tempDir + "/seqs.fasta"), "fasta")
-    command = ClustalwCommandline(Var().clustalWPath(), infile=(tempDir + "/seqs.fasta"))
+    command = ClustalwCommandline(
+        Var().clustalWPath(), infile=(tempDir + "/seqs.fasta"))
     clusalAlignmentOutput = command()
-    score  = parseScore(clusalAlignmentOutput[0])
+    score = parseScore(clusalAlignmentOutput[0])
     printAndLog("New alignment Score: " + score)
-    return score 
+    return score
 
 
 def loadCurrentAlignment():
-  tempDir = str(pathlib.Path(__file__).parent.resolve())
-  return AlignIO.read(tempDir + "/seqs.aln", "clustal")
+    tempDir = str(pathlib.Path(__file__).parent.resolve())
+    return AlignIO.read(tempDir + "/seqs.aln", "clustal")
 
 
 def generateTree(alignment):

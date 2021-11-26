@@ -41,7 +41,6 @@ def main(args):
     # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
     # Este alineamiento lo descarto, ya que no me sirve
     lastScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-    lastAlignmentAux = func.loadCurrentAlignment()
 
     # Realizo el filtrado de secuencias del alineamiento inicial pasado por el usuario
     aligmentFiltered = func.filterAlignment(lastAlignment)
