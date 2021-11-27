@@ -34,10 +34,10 @@ def main(args):
     file = arg.file
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     lastAlignment = func.loadFile(file)
-
+    print(lastAlignment[3])
     # Obtengo las secuencias originales
     ungappedSequences = func.getungappedSequences(lastAlignment)
-
+    print(lastAlignment[3])
     # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
     # Este alineamiento lo descarto, ya que no me sirve
     lastScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
@@ -65,11 +65,18 @@ def main(args):
     print(len(currentAlignment))
     # Genero el árbol filogenético y lo retorno
     tree = func.generateTree(currentAlignment)
+
+
+    # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
+    # TODO: Hacer que el arbol se genere de verdad
+
     return tree
 
 
 def getArgs(args):
     parser = argparse.ArgumentParser(description='Alignment optimizer')
+    # TODO: Agregar argumento de path de salida del arbol y del alineamiento final
+    # TODO: Completar Help
     parser.add_argument('-f', '--file',
                         type=str,
                         help='File fasta format', required=False, default=(str(pathlib.Path().resolve()) + '/alignment.fasta'))

@@ -10,6 +10,7 @@ from Bio.Align.Applications import ClustalwCommandline
 import re
 import os
 import sys
+import copy
 
 # -------------------
 # Funciones Principales
@@ -53,11 +54,11 @@ def filterAlignment(anAlignment):
     # Saco la secuencia que tiene mas gaps
     # Se puede agregar la comparacion con la query usando pairwise si hay dos con la misma cantidad de gaps
     # (Mas adelante, en esta funcion tambien usamos lo de las secuencias homologas)
-    mostGappedSeq = anAlignment[0]
-    for sequence in anAlignment:
-        mostGappedSeq = mostGapped(mostGappedSeq, sequence,anAlignment[0])
-    printAndLog("Sequence {id} has been removed from the alignment.".format(
-        id=mostGappedSeq.id))
+    mostGappedSeq = anAlignment[1]
+    for index in range(2, len(anAlignment)):
+        mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[index],anAlignment[0])
+    printAndLog("Sequence {id} with a lenght of {len} has been removed from the alignment.".format(
+        id=mostGappedSeq.id, len=len(mostGappedSeq.seq.ungap()) ))
 
     sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
     printAndLog(str(len(sequences)) + " sequences left.")
@@ -88,8 +89,9 @@ def gaps(aSequence):
 def getungappedSequences(anAlignment):
     # Obtengo del alineamiento pasado por parametro las secuencias originales
     # Para eso elimino todos los gaps
+    alignment = copy.deepcopy(anAlignment)
     baseSequences = []
-    for sequence in anAlignment:
+    for sequence in alignment:
         sequence.seq = sequence.seq.ungap()
         baseSequences.append(sequence)
     return baseSequences

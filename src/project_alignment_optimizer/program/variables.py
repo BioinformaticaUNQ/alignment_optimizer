@@ -1,6 +1,7 @@
 import pathlib
 # Variables
 # ---------------------
+# TODO: Refactor y pasar a un archivo las variables
 class Var():
     def __init__(self):
 
