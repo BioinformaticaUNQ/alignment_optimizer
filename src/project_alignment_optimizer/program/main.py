@@ -35,42 +35,49 @@ def main(args):
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     lastAlignment = func.loadFile(file)
     print(lastAlignment[3])
-    # Obtengo las secuencias originales
-    ungappedSequences = func.getungappedSequences(lastAlignment)
-    print(lastAlignment[3])
-    # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
-    # Este alineamiento lo descarto, ya que no me sirve
-    lastScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
 
-    # Realizo el filtrado de secuencias del alineamiento inicial pasado por el usuario
-    aligmentFiltered = func.filterAlignment(lastAlignment)
+    if(len(lastAlignment)> var.nMinSequences()):
+        # Obtengo las secuencias originales
+        ungappedSequences = func.getungappedSequences(lastAlignment)
+        print(lastAlignment[3])
+        # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
+        # Este alineamiento lo descarto, ya que no me sirve
+        lastScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
 
-    # Obtengo las secuencias originales
-    ungappedSequences = func.getungappedSequences(aligmentFiltered)
-
-    # Genero el nuevo alineamiento y calculo su score
-    currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-    currentAlignment = func.loadCurrentAlignment()
-
-    # Genero nuevos alineamientos y sus scores correspondientes
-    # mientras aumente el score actual o llegue al minimo de secuencias
-    while(currentScore > lastScore and len(currentAlignment) > var.nMinSequences()):
-        lastAlignment = currentAlignment
-        lastScore = currentScore
+        # Realizo el filtrado de secuencias del alineamiento inicial pasado por el usuario
         aligmentFiltered = func.filterAlignment(lastAlignment)
+
+        # Obtengo las secuencias originales
         ungappedSequences = func.getungappedSequences(aligmentFiltered)
+
+        # Genero el nuevo alineamiento y calculo su score
         currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
         currentAlignment = func.loadCurrentAlignment()
 
-    print(len(currentAlignment))
-    # Genero el árbol filogenético y lo retorno
-    tree = func.generateTree(currentAlignment)
+        # Genero nuevos alineamientos y sus scores correspondientes
+        # mientras aumente el score actual o llegue al minimo de secuencias
+        while(currentScore > lastScore and len(currentAlignment) > var.nMinSequences()):
+            lastAlignment = currentAlignment
+            lastScore = currentScore
+            aligmentFiltered = func.filterAlignment(lastAlignment)
+            ungappedSequences = func.getungappedSequences(aligmentFiltered)
+            currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
+            currentAlignment = func.loadCurrentAlignment()
+
+        print(len(currentAlignment))
+        print(currentScore)
+        # Genero el árbol filogenético y lo retorno
+        tree = func.generateTree(currentAlignment)
 
 
-    # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
-    # TODO: Hacer que el arbol se genere de verdad
+        # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
+        # TODO: Hacer que el arbol se genere de verdad
 
-    return tree
+        return tree
+    else:
+        func.printAndLog('Current amount of sequences provided is ' + str(len(lastAlignment)) + 
+        ' and the minimum amount is ' + str(var.nMinSequences()))
+       
 
 
 def getArgs(args):
@@ -78,8 +85,11 @@ def getArgs(args):
     # TODO: Agregar argumento de path de salida del arbol y del alineamiento final
     # TODO: Completar Help
     parser.add_argument('-f', '--file',
-                        type=str,
-                        help='File fasta format', required=False, default=(str(pathlib.Path().resolve()) + '/alignment.fasta'))
+                           type=str,
+                           help='File fasta format', required=False, default=(str(pathlib.Path().resolve()) + '/alignment.fasta'))
+   # parser.add_argument('-f', '--file',
+   #                     type=str,
+   #                     help='File fasta format', required=False, default=(str(pathlib.Path().resolve()) + '/alintest1.fasta'))
     arg = parser.parse_args()
     return arg
 

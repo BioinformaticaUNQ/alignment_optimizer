@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from variables import Var
+from project_alignment_optimizer.program.variables import Var
 import logging as log
 import pathlib
 from Bio import SeqIO
@@ -25,6 +25,7 @@ def configureVariables():
 def loadFile(filename):
     # Validar path
     # Validar formato
+    # Validar que sea la cantidad de secuencias sea mayor al valor minimo
     # Obtengo el archivo con el alineamiento inicial
     checkIsValidPath(filename)
     with open(filename, "r") as handle:
