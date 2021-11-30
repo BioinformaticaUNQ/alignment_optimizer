@@ -1,10 +1,12 @@
 # coding=utf-8
 import pathlib
-from variables import Var
+import project_alignment_optimizer.program.variables_service as variables_service
 import functions as func
 import logging as log
 import argparse
 import sys
+
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, MIN_SEQUENCES
 
 
 # ---------------------
@@ -22,21 +24,86 @@ log.error('Probando error')
 # Programa Principal
 # ---------------------
 
-def main(args):
+class AlignmentOptimazer(object):
+
+    def __init__(self):
+        parser = argparse.ArgumentParser(
+            description='Description for AlignmentOptimazer',
+            usage='''<command> [<args>]
+
+            Commands:
+            align           Run alignment code.
+            config          Configuration management.
+            view_config     View commands.
+            ''')
+
+        parser.add_argument('command', help='Subcommand to run')
+        # parse_args defaults to [1:] for args, but you need to
+        # exclude the rest of the args too, or validation will fail
+        args = parser.parse_args(sys.argv[1:2])
+        if not hasattr(self, args.command):
+            print('Unrecognized command')
+            parser.print_help()
+            exit(1)
+        # use dispatch pattern to invoke method with same name
+        getattr(self, args.command)()
+
+    def align(self):
+        parser = argparse.ArgumentParser(description='Align .fasta file.')
+
+        parser.add_argument('-f', '--file',
+                            type=str,
+                            help='File fasta format',
+                            required=False,
+                            default=(str(pathlib.Path().resolve()) + '/alignment.fasta'))
+
+        args = parser.parse_args(sys.argv[2:])
+        _aligh(args)
+
+    def config(self):
+        parser = argparse.ArgumentParser(description='Modify commands from the config.env file.')
+
+        parser.add_argument('-r', '--reset',
+                            type=bool,
+                            help='Reset the config.env file to default.',
+                            required=False)
+
+        parser.add_argument('-k', '--key',
+                            type=str,
+                            help='Key from the config.env file.',
+                            required=False)
+
+        parser.add_argument('-v', '--value',
+                            type=int,
+                            help='Value for the key.',
+                            required=False)
+
+        args = parser.parse_args(sys.argv[2:])
+        _config(args)
+    
+    def view_config(self):
+        _view_config()
+
+
+# ---------------------
+# Funciones
+# ---------------------
+
+def _aligh(args):
 
     # Inicializo las variables:
-    var = Var()
+    env_variables = variables_service.getDictVariables(True)
 
     # Configuro las variables
     # --- Todo esto se lo tenemos que pedir al usuario y comentar cuales son los valores por defecto ---
     func.configureVariables()
-    arg = getArgs(args)
-    file = arg.file
+
+    file = args.file
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     lastAlignment = func.loadFile(file)
     print(lastAlignment[3])
 
-    if(len(lastAlignment)> var.nMinSequences()):
+    if(len(lastAlignment)> env_variables[MIN_SEQUENCES]):
         # Obtengo las secuencias originales
         ungappedSequences = func.getungappedSequences(lastAlignment)
         print(lastAlignment[3])
@@ -56,7 +123,7 @@ def main(args):
 
         # Genero nuevos alineamientos y sus scores correspondientes
         # mientras aumente el score actual o llegue al minimo de secuencias
-        while(currentScore > lastScore and len(currentAlignment) > var.nMinSequences()):
+        while(currentScore > lastScore and len(currentAlignment) > env_variables[MIN_SEQUENCES]):
             lastAlignment = currentAlignment
             lastScore = currentScore
             aligmentFiltered = func.filterAlignment(lastAlignment)
@@ -76,26 +143,26 @@ def main(args):
         return tree
     else:
         func.printAndLog('Current amount of sequences provided is ' + str(len(lastAlignment)) + 
-        ' and the minimum amount is ' + str(var.nMinSequences()))
+        ' and the minimum amount is ' + str(env_variables[MIN_SEQUENCES]))
+
+def _config(args):
+    if args.reset:
+        pass # restart all variables.
+    if args.key and args.value:
+        key_upper = args.key.upper()
+        dictVariables = variables_service.getDictVariables()
+        if key_upper in dictVariables:
+            variables_service.setVariableEnv(key_upper, args.value)
+            print(f"Key '{key_upper}' was modified correctly, new value = {args.value}.")
+        else:
+            print(f'Key Unrecognized, valid keys:{ALL_ENV_VARIABLES}')
+            exit(1)
+
+def _view_config():
+    print(variables_service.getAllVariablesTable())
        
-
-
-def getArgs(args):
-    parser = argparse.ArgumentParser(description='Alignment optimizer')
-    # TODO: Agregar argumento de path de salida del arbol y del alineamiento final
-    # TODO: Completar Help
-    parser.add_argument('-f', '--file',
-                           type=str,
-                           help='File fasta format', required=False, default=(str(pathlib.Path().resolve()) + '/alignment.fasta'))
-   # parser.add_argument('-f', '--file',
-   #                     type=str,
-   #                     help='File fasta format', required=False, default=(str(pathlib.Path().resolve()) + '/alintest1.fasta'))
-    arg = parser.parse_args()
-    return arg
-
-
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    AlignmentOptimazer()
 
 # Para correrlo:
 # python src/project_alignment_optimizer/program/main.py

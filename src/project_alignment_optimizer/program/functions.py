@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.variables import Var
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH
 import logging as log
 import pathlib
 from Bio import SeqIO
@@ -109,7 +109,7 @@ def generateAlignmentAndCalculateScore(originalSequences):
     tempDir = str(pathlib.Path(__file__).parent.resolve())
     SeqIO.write(originalSequences, (tempDir + "/seqs.fasta"), "fasta")
     command = ClustalwCommandline(
-        Var().clustalWPath(), infile=(tempDir + "/seqs.fasta"))
+        CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"))
     clusalAlignmentOutput = command()
     score = parseScore(clusalAlignmentOutput[0])
     printAndLog("New alignment Score: " + score)
