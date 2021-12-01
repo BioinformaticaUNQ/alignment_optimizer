@@ -147,7 +147,8 @@ def _aligh(args):
 
 def _config(args):
     if args.reset:
-        pass # restart all variables.
+        variables_service.resetDefaultValues()
+        print('File config.env restored to default values.')
     if args.key and args.value:
         key_upper = args.key.upper()
         dictVariables = variables_service.getDictVariables()
