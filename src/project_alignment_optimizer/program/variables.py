@@ -16,7 +16,7 @@ class Var():
         self._fileFormat = 0
 
         # Define el numero minimo de secuencias que tiene que tener el alineamiento
-        self._nMinSequences = 35
+        self._nMinSequences = 50
 
         # Define la posicion en el array de la Secuencia Query
         self._querySequence = 0
@@ -32,6 +32,8 @@ class Var():
         self._dbBlast = 0
 
         self._clustalWPath = str(pathlib.Path(__file__).parent.parent.parent.parent.resolve()) + "/clustalw2"
+
+        self._nToRemove = 20
 
     # ---------------------
     # Setters
@@ -63,6 +65,9 @@ class Var():
 
     def setClustalWPath(self,aPath):
         self._clustalWPath = aPath
+    
+    def setNToRemove(self,n):
+        self._nToRemove = n
 
 
     # ---------------------
@@ -95,3 +100,6 @@ class Var():
 
     def dbBlast(self):
         return self._dbBlast
+
+    def nToRemove(self):
+        return self._nToRemove
