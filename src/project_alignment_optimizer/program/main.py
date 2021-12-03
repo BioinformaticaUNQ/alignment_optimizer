@@ -6,7 +6,7 @@ import logging as log
 import argparse
 import sys
 
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, MIN_SEQUENCES
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES
 
 
 # ---------------------
@@ -91,13 +91,6 @@ class AlignmentOptimazer(object):
 
 def _aligh(args):
 
-    # Inicializo las variables:
-    env_variables = variables_service.getDictVariables(True)
-
-    # Configuro las variables
-    # --- Todo esto se lo tenemos que pedir al usuario y comentar cuales son los valores por defecto ---
-    func.configureVariables()
-
     file = args.file
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     currentAlignment = func.loadFile(file)
@@ -163,7 +156,8 @@ def _config(args):
         print('File config.env restored to default values.')
     if args.key and args.value:
         key_upper = args.key.upper()
-        dictVariables = variables_service.getDictVariables()
+        print(key_upper)
+        dictVariables, dictDescriptions = variables_service.getDictVariables()
         if key_upper in dictVariables:
             variables_service.setVariableEnv(key_upper, args.value)
             print(f"Key '{key_upper}' was modified correctly, new value = {args.value}.")
@@ -178,7 +172,7 @@ def generateNewAlignmentAndScore(alignmentFiltered):
     ungappedSequences = func.getungappedSequences(alignmentFiltered)
     currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
     currentAlignment = func.loadCurrentAlignment()
-    return currentAlignment , currentScore
+    return currentAlignment, currentScore
 
 if __name__ == '__main__':
     AlignmentOptimazer()

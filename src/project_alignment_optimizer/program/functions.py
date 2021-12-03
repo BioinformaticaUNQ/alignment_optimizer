@@ -1,19 +1,17 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE
+import project_alignment_optimizer.program.variables_service as variables_service
 import logging as log
 import pathlib
-from Bio import SeqIO
-from Bio import AlignIO
-from Bio import Align
+from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
+from Bio.SeqRecord import SeqRecord
 import re
 import os
 import sys
 
-from Bio import Entrez,pairwise2
-from Bio.SeqRecord import SeqRecord
 
 import copy as c
 
@@ -22,11 +20,7 @@ import copy as c
 # Funciones Principales
 # ---------------------
 
-
-def configureVariables():
-    # Pido por consola todas las variables a utilizar por el sistema
-    printAndLog("Solicito Variables")
-
+env_variables = variables_service.getDictVariables(True)
 
 def loadFile(filename):
     # Validar path
@@ -59,11 +53,11 @@ def calculateScore(alignment):
 
 def filterAlignment(anAlignment):
     lenSeq = len(anAlignment[0].seq)
-    # Tomo el valor qe voy a cortar del inicio y del final para sacar los purificadores
+    # Tomo el valor que voy a cortar del inicio y del final para sacar los purificadores
     
-    nToRemove = 20 # TODO: hacer este metodo  var.nToRemove
+    nToRemove = env_variables[PURIFY_AMINO]
     # Agarro la sequencia query
-    querySeq = anAlignment[0] # TODO: hacer este metodo   Var().querySequence()
+    querySeq = anAlignment[env_variables[QUERY_SEQUENCE]]
     # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
     if lenSeq > (nToRemove*2):
         start = nToRemove
@@ -101,7 +95,7 @@ def filterAlignment(anAlignment):
 
 def filterAlignmentAlternative(anAlignment):
     # Saco la secuencia que tiene mas gaps
-    querySeq = anAlignment[0] #TODO Var().querySequence() 
+    querySeq = anAlignment[env_variables[QUERY_SEQUENCE]]
     mostGappedSeq = anAlignment[1]
     for ind in range(2,len(anAlignment)):
         mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
@@ -118,7 +112,7 @@ def filterAlignmentAlternative(anAlignment):
 def checkToAdd(seqQuery, sequences):
     # Por ahora agregamos para seguir manteniento el nMin
     # Mas adelante tendremos que agregar en otros momentos
-    if len(sequences) < 50: #TODO: Var().nMinSequences()
+    if len(sequences) < env_variables[MIN_SEQUENCES]:
         seqAux = selectSequenceToAdd(seqQuery, sequences)
         sequences.push(seqAux)
     return sequences
@@ -136,7 +130,7 @@ def selectSequenceToAdd(seqQuery, sequences):
 
 
 def alignmentHasNMinSequences(sequences):
-    return len(sequences) >= 50 #TODO Var().nMinSequences()
+    return len(sequences) >= env_variables[MIN_SEQUENCES]
 
 
 def mostGapped(aSequence, anotherSequence, aQuerySequence):
