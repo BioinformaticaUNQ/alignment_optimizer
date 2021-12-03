@@ -15,6 +15,9 @@ import sys
 from Bio import Entrez,pairwise2
 from Bio.SeqRecord import SeqRecord
 
+import copy as c
+
+
 # -------------------
 # Funciones Principales
 # ---------------------
@@ -55,18 +58,85 @@ def calculateScore(alignment):
 
 
 def filterAlignment(anAlignment):
+    lenSeq = len(anAlignment[0].seq)
+    # Tomo el valor qe voy a cortar del inicio y del final para sacar los purificadores
+    
+    nToRemove = 20 # TODO: hacer este metodo  var.nToRemove
+    # Agarro la sequencia query
+    querySeq = anAlignment[0] # TODO: hacer este metodo   Var().querySequence()
+    # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
+    if lenSeq > (nToRemove*2):
+        start = nToRemove
+        end = len(querySeq.seq)-nToRemove
+    else:
+        start = 0
+        end = len(querySeq.seq)
+    # Corto todas las secuencias del alineamiento por el numero obtenido en el paso anterior
+    # Me fijo en que posiciones hay gaps y guardo los indices en una lista
+    indices = []
+    for i in range(start, end):
+        if querySeq.seq[i] == '-':
+            indices.append(i)
+    # Recorro todas las secuencias y me voy quedando con los indices que esten en la lista
+    seqToRemove = anAlignment[1]
+    countSeqToRemove = -1
+    for x in range(1,len(anAlignment)):
+        seq = anAlignment[x].seq
+        count = 0
+        for y in indices:
+            # Una vez obtenido esas secuencias filtradas, busco la que tenga mayor numero de aminoaciodos y esa es la que voy a eliminar
+            if seq[y] != '-':
+                count += 1
+        if count > countSeqToRemove:
+            seqToRemove = anAlignment[x]
+    printAndLog("Sequence {id} has been removed from the alignment.".format(
+        id=seqToRemove.id))
+    sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
+    printAndLog(str(len(sequences)) + " sequences left.")
+    print("Current Alignment: " + str(len(sequences)))
+    response = checkToAdd(querySeq, sequences)
+    print("Current Alignment: " + str(len(response)))
+    return response
+
+
+def filterAlignmentAlternative(anAlignment):
     # Saco la secuencia que tiene mas gaps
-    # Se puede agregar la comparacion con la query usando pairwise si hay dos con la misma cantidad de gaps
-    # (Mas adelante, en esta funcion tambien usamos lo de las secuencias homologas)
-    mostGappedSeq = anAlignment[0]
-    for sequence in anAlignment:
-        mostGappedSeq = mostGapped(mostGappedSeq, sequence,anAlignment[0])
+    querySeq = anAlignment[0] #TODO Var().querySequence() 
+    mostGappedSeq = anAlignment[1]
+    for ind in range(2,len(anAlignment)):
+        mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
     printAndLog("Sequence {id} has been removed from the alignment.".format(
         id=mostGappedSeq.id))
-
     sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
     printAndLog(str(len(sequences)) + " sequences left.")
+    print("Current Alignment: " + str(len(sequences)))
+    response = checkToAdd(querySeq, sequences)
+    print("Current Alignment: " + str(len(response)))
+    return response
+
+
+def checkToAdd(seqQuery, sequences):
+    # Por ahora agregamos para seguir manteniento el nMin
+    # Mas adelante tendremos que agregar en otros momentos
+    if len(sequences) < 50: #TODO: Var().nMinSequences()
+        seqAux = selectSequenceToAdd(seqQuery, sequences)
+        sequences.push(seqAux)
     return sequences
+
+
+def selectSequenceToAdd(seqQuery, sequences):
+    # Deberia devolver una secuencia que no este en el alineamiento y que no haya sido agregada previamente
+    seqs = getHomologuesSequencesOrderedByMaxScore(seqQuery)
+    # Duda: Trae todas las secuencias homologas que encuentra?
+    # Duda: Podriamos hacerlo una sola vez, guardar las homologas e ir sacando las que ya agregamos?
+    # Por ahora solo devuelvo la primera que devuelve, sin tener en cuenta lo de arriba
+    for seq in seqs:
+        if not seq in sequences:
+            return seq
+
+
+def alignmentHasNMinSequences(sequences):
+    return len(sequences) >= 50 #TODO Var().nMinSequences()
 
 
 def mostGapped(aSequence, anotherSequence, aQuerySequence):
@@ -77,11 +147,10 @@ def mostGapped(aSequence, anotherSequence, aQuerySequence):
         aligner = Align.PairwiseAligner()
         alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
         alignment2 = aligner.align(anotherSequence.seq.ungap(),aQuerySequence.seq.ungap())
-        if alignment1.score > alignment2.score:
+        if alignment1.score < alignment2.score:
             return aSequence
         else:
             return anotherSequence
-
     else:
         return anotherSequence
 
@@ -94,7 +163,8 @@ def getungappedSequences(anAlignment):
     # Obtengo del alineamiento pasado por parametro las secuencias originales
     # Para eso elimino todos los gaps
     baseSequences = []
-    for sequence in anAlignment:
+    ungappedSequences = c.deepcopy(anAlignment)
+    for sequence in ungappedSequences:
         sequence.seq = sequence.seq.ungap()
         baseSequences.append(sequence)
     return baseSequences
@@ -126,6 +196,7 @@ def generateTree(alignment):
     tree = alignment
     return tree
 
+
 def getHomologuesSequencesOrderedByMaxScore(seqQuery):
     #Se pasa como parametro un SeqRecord
     #y devuelve una lista de SeqRecord 
@@ -144,9 +215,6 @@ def getHomologuesSequencesOrderedByMaxScore(seqQuery):
         result = getSequencesOrderedByMaxScore(seqQuery, output)
     return result
 
-# ---------------------
-# Funciones Auxiliares
-# ---------------------
 
 def calculateScorePar(sequences):
     score = 0
@@ -174,11 +242,13 @@ def compareCost(u, v):
             return gap
         return mismatch
 
+
 def printAndLog(msg):
     print(msg)
     log.info(msg)
 
-def getIdsHomologuesSequences(idProtein):    
+
+def getIdsHomologuesSequences(idProtein):
     Entrez.email = "A.N.Other@example.com"
     handle = Entrez.efetch(db="protein", id=idProtein,rettype='ipg', retmode='xml')
     output = Entrez.read(handle)
@@ -187,8 +257,8 @@ def getIdsHomologuesSequences(idProtein):
     if proteinList:
         for indx in range(0,len(proteinList)):
             result.append(proteinList[indx].attributes['accver'])
-
     return result
+
 
 def getSequencesOrderedByMaxScore(seqQuery,output):
     result = []
@@ -200,6 +270,7 @@ def getSequencesOrderedByMaxScore(seqQuery,output):
                 result.append((seqHomologue,pairwise2.align.globalxx(seqQuery.seq, seqHomologue.seq,score_only=True)))
         result.sort(key=takeSecond,reverse=True)
     return [i[0] for i in result] 
+
 
 def takeSecond(elem):
     return elem[1]

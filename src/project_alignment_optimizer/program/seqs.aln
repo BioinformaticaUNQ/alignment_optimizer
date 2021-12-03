@@ -3,7 +3,7 @@ CLUSTAL 2.1 multiple sequence alignment
 
 6QA2_A          ------------------------------MTERTLVLIKPDGIERQLIGEIISRIERKG
 1K44_A          ------------------------------MTERTLVLIKPDGIERQLIGEIISRIERKG
-4ANC_A          ------------------------------MTERTLVLIKPDGIERQLIGEIISRIERKG
+4ANE_A          ------------------------------MTERTLVLIKPDGIERQLIGEIISRIERKG
 1VYA_A          -------------------------------MESTFIMIKPDGVQRGLIGEIISRFEKKG
 1U8W_A          -------------------------------MEQTFIMIKPDGVQRGLIGEVICRFEKKG
 1PKU_A          ------------------------------RMEQSFIMIKPDGVQRGLIGDIISRFEKKG
@@ -97,7 +97,7 @@ CLUSTAL 2.1 multiple sequence alignment
 
 6QA2_A          LTIAALQLR-TVSAELASQHYAEHE---------------------------------GK
 1K44_A          LTIAALQLR-TVSAELASQHYAEHE---------------------------------GK
-4ANC_A          LTIAALQLR-TVSAELASQHYAEHE---------------------------------GK
+4ANE_A          LTIAALQLR-TVSAELASQHYAEHE---------------------------------GK
 1VYA_A          FYLKALKLV-NVERSFAEKHYADLA---------------------------------SK
 1U8W_A          FTLKGLKLI-SVERSFAEKHYEDLS---------------------------------SK
 1PKU_A          FYLRGMKFM-NVERSFAQQHYADLS---------------------------------DK
@@ -191,7 +191,7 @@ CLUSTAL 2.1 multiple sequence alignment
 
 6QA2_A          PFFGSLLEFITSGPVVAAIVEGTAAIAAVRQLAGGTDPVQAA--APGTIRGDFA------
 1K44_A          PFFGSLLEFITSGPVVAAIVEGTRAIAAVRQLAGGTDPVQAA--APGTIRGDFA------
-4ANC_A          PFFGSLLEFITSGPVVAAIVEGTRAIAAVRQLAGGTNPVQAA--APGTIRGDFA------
+4ANE_A          PFFGSLLEFITSGPVVAAIVEGTNAIAAVRQLAGGTDPVQAA--APGTIRGDFA------
 1VYA_A          PFFQGLVDYIISGPVVAMVWEGKSVVTTGRKIIGATNPLAS---EPGTIRGDFA------
 1U8W_A          SFFSGLVDYIVSGPVVAMIWEGKNVVLTGRKIIGATNPAAS---EPGTIRGDFA------
 1PKU_A          PFFPGLVEYIISGPVVAMVWEGKDVVATGRRIIGATRPWEA---APGTIRADYA------
@@ -285,7 +285,7 @@ CLUSTAL 2.1 multiple sequence alignment
 
 6QA2_A          -LETQ---FNLVHGSDS--AESAQREIALWFPGA--------------------------
 1K44_A          -LETQ---FNLVHGSDS--AESAQREIALWFPGA--------------------------
-4ANC_A          -LETQ---FNLVHGSDS--AESAQREIALWFPGA--------------------------
+4ANE_A          -LETQ---FNLVHGSDS--AESAQREIALWFPGA--------------------------
 1VYA_A          -VDIG---RNVIHGSDS--IESANKEIALWF-PEGLADWQSSQHPWIYEK----------
 1U8W_A          -IDIG---RNVIHGSDS--VESARKEIALWF-PDGPVNWQSSVHPWVYET----------
 1PKU_A          -VEVG---RNVIHGSDS--VDNGKKEIALWF-PEGLAEWRSNLHPWIYES----------
@@ -379,7 +379,7 @@ CLUSTAL 2.1 multiple sequence alignment
 
 6QA2_A          ------
 1K44_A          ------
-4ANC_A          ------
+4ANE_A          ------
 1VYA_A          ------
 1U8W_A          ------
 1PKU_A          ------

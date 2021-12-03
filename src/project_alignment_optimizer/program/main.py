@@ -100,51 +100,63 @@ def _aligh(args):
 
     file = args.file
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
-    lastAlignment = func.loadFile(file)
-    print(lastAlignment[3])
+    currentAlignment = func.loadFile(file)
 
-    if(len(lastAlignment)> env_variables[MIN_SEQUENCES]):
+    if(func.alignmentHasNMinSequences(currentAlignment)):
         # Obtengo las secuencias originales
-        ungappedSequences = func.getungappedSequences(lastAlignment)
-        print(lastAlignment[3])
+        ungappedSequences = func.getungappedSequences(currentAlignment)
+
         # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
         # Este alineamiento lo descarto, ya que no me sirve
-        lastScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-
-        # Realizo el filtrado de secuencias del alineamiento inicial pasado por el usuario
-        aligmentFiltered = func.filterAlignment(lastAlignment)
-
-        # Obtengo las secuencias originales
-        ungappedSequences = func.getungappedSequences(aligmentFiltered)
-
-        # Genero el nuevo alineamiento y calculo su score
         currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-        currentAlignment = func.loadCurrentAlignment()
 
         # Genero nuevos alineamientos y sus scores correspondientes
-        # mientras aumente el score actual o llegue al minimo de secuencias
-        while(currentScore > lastScore and len(currentAlignment) > env_variables[MIN_SEQUENCES]):
+        # Mientras aumente el score actual sigo aplicando los filtros
+        bestAlignment = currentAlignment
+        bestScore = currentScore
+        better = True
+        print("Current Alignment: " + str(len(currentAlignment)))
+        while(better):
             lastAlignment = currentAlignment
             lastScore = currentScore
-            aligmentFiltered = func.filterAlignment(lastAlignment)
-            ungappedSequences = func.getungappedSequences(aligmentFiltered)
-            currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-            currentAlignment = func.loadCurrentAlignment()
+            # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
+            print("FILTER 1")
+            alignmentFiltered = func.filterAlignment(lastAlignment)
+            currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
+            print("Current Alignment: " + str(len(currentAlignment)))
+            if(currentScore > lastScore):
+                bestAlignment = currentAlignment
+                bestScore = currentScore
+            else:
+                # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
+                print("FILTER 2")
+                alignmentFiltered = func.filterAlignmentAlternative(lastAlignment)
+                currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
+                print("Current Alignment: " + str(len(currentAlignment)))
+                if(currentScore > lastScore):
+                    bestAlignment = currentAlignment
+                    bestScore = currentScore
+                    print("MEJORO")
+                else:
+                    # TODO: Aqui se podria agregar un tercer filtrado (ver el agregado de homologas en otra situacion que no sea al llegar al nMin)
+                    # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
+                    better = False
+                    print("NO MEJORO")
 
-        print(len(currentAlignment))
-        print(currentScore)
+        print(len(bestAlignment))
+        print(bestScore)
+
         # Genero el árbol filogenético y lo retorno
-        tree = func.generateTree(currentAlignment)
-
+        tree = func.generateTree(bestAlignment)
 
         # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
         # TODO: Hacer que el arbol se genere de verdad
 
         return tree
     else:
-        func.printAndLog('Current amount of sequences provided is ' + str(len(lastAlignment)) + 
-        ' and the minimum amount is ' + str(env_variables[MIN_SEQUENCES]))
-
+        func.printAndLog('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
+        ' and it is less than the minimum of sequences established for the alignment')
+       
 def _config(args):
     if args.reset:
         variables_service.resetDefaultValues()
@@ -162,6 +174,12 @@ def _config(args):
 def _view_config():
     print(variables_service.getAllVariablesTable())
        
+def generateNewAlignmentAndScore(alignmentFiltered):
+    ungappedSequences = func.getungappedSequences(alignmentFiltered)
+    currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
+    currentAlignment = func.loadCurrentAlignment()
+    return currentAlignment , currentScore
+
 if __name__ == '__main__':
     AlignmentOptimazer()
 
