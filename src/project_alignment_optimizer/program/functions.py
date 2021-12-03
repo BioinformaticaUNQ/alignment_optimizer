@@ -146,7 +146,7 @@ def mostGapped(aSequence, anotherSequence, aQuerySequence):
         aligner = Align.PairwiseAligner()
         alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
         alignment2 = aligner.align(anotherSequence.seq.ungap(),aQuerySequence.seq.ungap())
-        if alignment1.score > alignment2.score:
+        if alignment1.score < alignment2.score:
             return aSequence
         else:
             return anotherSequence
