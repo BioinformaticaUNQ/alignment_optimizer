@@ -1,7 +1,7 @@
 import os
 import dotenv
 from prettytable import PrettyTable
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST
 
 dotenv_file = dotenv.find_dotenv('config.env')
 dotenv.load_dotenv(dotenv_file)
@@ -47,3 +47,4 @@ def resetDefaultValues():
     setVariableEnv(QUERY_SEQUENCE, 0)
     setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, 0)
     setVariableEnv(DB_BLAST, 0)
+    setVariableEnv(PURIFY_AMINO, 0)
