@@ -16,11 +16,11 @@ import sys
 import copy as c
 
 
-# -------------------
+# ---------------------
 # Funciones Principales
 # ---------------------
 
-env_variables = variables_service.getDictVariables(True)
+env_variables, env_description = variables_service.getDictVariables(True)
 
 def loadFile(filename):
     # Validar path
