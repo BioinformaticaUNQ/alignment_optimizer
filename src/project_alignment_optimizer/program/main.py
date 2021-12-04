@@ -6,7 +6,7 @@ import logging as log
 import argparse
 import sys
 
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES
+from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN
 
 
 # ---------------------
@@ -54,11 +54,16 @@ class AlignmentOptimazer(object):
         parser.add_argument('-f', '--file',
                             type=str,
                             help='File fasta format',
-                            required=False,
-                            default=(str(pathlib.Path().resolve()) + '/alignment.fasta'))
+                            required=True,
+                            default=(str(pathlib.Path().resolve()) + '/alignment.fasta')) # TODO: Delete this row
+
+        parser.add_argument('-qs', '--query_sequence',
+                            type=str,
+                            help='Define the query sequence',
+                            required=True,)
 
         args = parser.parse_args(sys.argv[2:])
-        _aligh(args)
+        _align(args)
 
     def config(self):
         parser = argparse.ArgumentParser(description='Modify commands from the config.env file.')
@@ -89,99 +94,31 @@ class AlignmentOptimazer(object):
 # Funciones
 # ---------------------
 
-def _aligh(args):
+def _align(args):
+    # Muestro la tabla de configuracion
+    print(variables_service.getAllVariablesTable(args))
+    
+    # Pregunto si esta seguro que quiere ejecutar el comando con esa configuracion.
+    if not func.query_yes_no(QUERY_RUN_ALIGN):
+        return
 
-    file = args.file
-    # Cargo el archivo con el alineamiento inicial que me pasa el usuario
-    currentAlignment = func.loadFile(file)
+    # Busco las variables globales
+    env_variables = variables_service.getDictVariablesValues()
 
-    if(func.alignmentHasNMinSequences(currentAlignment)):
-        # Obtengo las secuencias originales
-        ungappedSequences = func.getungappedSequences(currentAlignment)
+    func.align(args, env_variables)
+   
 
-        # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
-        # Este alineamiento lo descarto, ya que no me sirve
-        currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-
-        # Genero nuevos alineamientos y sus scores correspondientes
-        # Mientras aumente el score actual sigo aplicando los filtros
-        bestAlignment = currentAlignment
-        bestScore = currentScore
-        better = True
-        print("Current Alignment: " + str(len(currentAlignment)))
-        while(better):
-            lastAlignment = currentAlignment
-            lastScore = currentScore
-            # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
-            print("FILTER 1")
-            alignmentFiltered = func.filterAlignment(lastAlignment)
-            currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-            print("Current Alignment: " + str(len(currentAlignment)))
-            if(currentScore > lastScore):
-                bestAlignment = currentAlignment
-                bestScore = currentScore
-                lastScore = currentScore
-                lastAlignment = currentAlignment
-                print("MEJORO 😁")
-            else:
-                print("NO MEJORO 😨")
-                # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
-                print("FILTER 2")
-                alignmentFiltered = func.filterAlignmentAlternative(lastAlignment)
-                currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-                print("Current Alignment: " + str(len(currentAlignment)))
-                if(currentScore > lastScore):
-                    bestAlignment = currentAlignment
-                    bestScore = currentScore
-                    lastScore = currentScore
-                    lastAlignment = currentAlignment
-                    print("MEJORO 😀")
-                else:
-                    # TODO: Aqui se podria agregar un tercer filtrado (ver el agregado de homologas en otra situacion que no sea al llegar al nMin)
-                    # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
-                    better = False
-                    print("NO MEJORO 😖")
-
-        print(len(bestAlignment))
-        print(bestScore)
-
-        # Genero el árbol filogenético y lo retorno
-        tree = func.generateTree(bestAlignment)
-
-        # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
-        # TODO: Hacer que el arbol se genere de verdad
-
-        return tree
-    else:
-        func.printAndLog('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
-        ' and it is less than the minimum of sequences established for the alignment')
-       
 def _config(args):
     if args.reset:
         variables_service.resetDefaultValues()
         print('File config.env restored to default values.')
     if args.key and args.value:
-        key_upper = args.key.upper()
-        print(key_upper)
-        dictVariables, dictDescriptions = variables_service.getDictVariables()
-        if key_upper in dictVariables:
-            variables_service.setVariableEnv(key_upper, args.value)
-            print(f"Key '{key_upper}' was modified correctly, new value = {args.value}.")
-        else:
-            print(f'Key Unrecognized, valid keys:{ALL_ENV_VARIABLES}')
-            exit(1)
+        variables_service.config_set_key_new_value(args)
+
 
 def _view_config():
-    print(variables_service.getAllVariablesTable())
+    print(variables_service.getAllVariablesTableWithDescription())
        
-def generateNewAlignmentAndScore(alignmentFiltered):
-    ungappedSequences = func.getungappedSequences(alignmentFiltered)
-    currentScore = func.generateAlignmentAndCalculateScore(ungappedSequences)
-    currentAlignment = func.loadCurrentAlignment()
-    return currentAlignment, currentScore
 
 if __name__ == '__main__':
     AlignmentOptimazer()
-
-# Para correrlo:
-# python src/project_alignment_optimizer/program/main.py

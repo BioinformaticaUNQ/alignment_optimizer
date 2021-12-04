@@ -1,7 +1,7 @@
 import os
 import dotenv
 from prettytable import PrettyTable
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PATH
 
 dotenv_file = dotenv.find_dotenv('config.env')
 dotenv.load_dotenv(dotenv_file)
@@ -9,42 +9,74 @@ dotenv.load_dotenv(dotenv_file)
 def getVariableIntEnv(key):
     return int(os.environ[key])
 
-def getVariableStrEnv(key):
-    return os.environ[key]
-
-def getDictVariables(valuesAsInteger = False):
-    dictVariables = {}
-    dictDescriptions = {}
+def getDictVariablesValues():
+    dictVariablesValues = {}
     # Recorre todas las variables del .env
-    for variable_env, variable_env_description in ALL_ENV_VARIABLES_WITH_DESCRIPTION:
-        if valuesAsInteger:
-            # Agrego al dict con el value tipo int
-            dictVariables[variable_env] = int(os.environ[variable_env])
-        else:
-            # Agrego al dict con el value tipo string
-            dictVariables[variable_env] = os.environ[variable_env]
-        dictDescriptions[variable_env] = variable_env_description
-    return dictVariables, dictDescriptions
+    for variable_env in ALL_ENV_VARIABLES:
+        # Agrego al dict con el value tipo int
+        dictVariablesValues[variable_env] = int(os.environ[variable_env])
+    return dictVariablesValues
+
+def getDictVariablesWithAllInfo():
+    dictVariablesInfo = {}
+    # Recorre todas las variables del .env
+    for name, description, type in ALL_ENV_VARIABLES_WITH_DESCRIPTION:
+        tempDict = {}
+        tempDict['CURRENT_VALUE'] = int(os.environ[name])
+        tempDict['DESCRIPTION'] = description
+        tempDict['TYPE'] = type
+
+        dictVariablesInfo[name] = tempDict
+
+    return dictVariablesInfo
 
 def setVariableEnv(key, value):
     dotenv.set_key(dotenv_file, key, str(value))
 
-def getAllVariablesTable():
-    table = PrettyTable(['Key', 'Value', 'Description'])
+def getAllVariablesTable(args):
+    table = PrettyTable(['Key', 'Current value'])
     table.align = 'l' # Align a la izquierda l -> left
-    dictVariables, dictDescriptions = getDictVariables()
-    for variable_env in dictVariables.keys():
-        table.add_row([variable_env, dictVariables[variable_env], dictDescriptions[variable_env]])
+    dictVariables = getDictVariablesWithAllInfo()
+
+    table.add_row([PATH, args.file])
+    table.add_row([QUERY_SEQUENCE, args.query_sequence])
+
+    for variable_env_name in dictVariables.keys():
+        if dictVariables[variable_env_name]['TYPE']:
+            current_value = dictVariables[variable_env_name]['CURRENT_VALUE']
+            type_info = dictVariables[variable_env_name]['TYPE'][current_value]
+            current_value_with_type = f"{current_value} ({type_info})"
+            table.add_row([ variable_env_name, current_value_with_type ])
+        else:
+            table.add_row([ variable_env_name, dictVariables[variable_env_name]['CURRENT_VALUE'] ])
 
     return table
+
+def getAllVariablesTableWithDescription():
+    table = PrettyTable(['Key', 'Current value', 'Description'])
+    table.align = 'l' # Align a la izquierda l -> left
+    dictVariablesWithDescription = getDictVariablesWithAllInfo()
+    for variable_env_name in dictVariablesWithDescription.keys():
+        variable_info = dictVariablesWithDescription[variable_env_name]
+        table.add_row([variable_env_name, variable_info['CURRENT_VALUE'], variable_info['DESCRIPTION']])
+
+    return table
+
+def config_set_key_new_value(args):
+    key_upper = args.key.upper()
+    if key_upper in ALL_ENV_VARIABLES:
+        setVariableEnv(key_upper, args.value)
+        print(f"Key '{key_upper}' was modified correctly, new value = {args.value}.")
+    else:
+        print(f'Key Unrecognized, valid keys:{ALL_ENV_VARIABLES}')
+        exit(1)
 
 def resetDefaultValues():
     setVariableEnv(MATCH, 1)
     setVariableEnv(MISMATCH, -1)
     setVariableEnv(GAP_PENALTY, -1)
     setVariableEnv(FILE_FORMAT, -1)
-    setVariableEnv(MIN_SEQUENCES, 35)
-    setVariableEnv(QUERY_SEQUENCE, 0)
+    setVariableEnv(MIN_SEQUENCES, 50)
     setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, 0)
     setVariableEnv(DB_BLAST, 0)
     setVariableEnv(PURIFY_AMINO, 20)

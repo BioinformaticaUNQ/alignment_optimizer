@@ -1,26 +1,98 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, PURIFY_AMINO, QUERY_SEQUENCE
-import project_alignment_optimizer.program.variables_service as variables_service
-import logging as log
-import pathlib
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, PURIFY_AMINO, VALID_QUERY_YES
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
 from Bio.SeqRecord import SeqRecord
+import logging as log
+import pathlib
 import re
 import os
 import sys
-
-
 import copy as c
-
 
 # ---------------------
 # Funciones Principales
 # ---------------------
 
-env_variables, env_description = variables_service.getDictVariables(True)
+def find_alignment_by_header(currentAlignment, query_sequence_header):
+    for alignment in currentAlignment:
+        if alignment.id == query_sequence_header:
+            return alignment
+    
+    print(f"The header {query_sequence_header} has not been found.")
+    sys.exit()
+
+def align(args, env_variables):
+
+    file = args.file
+    query_sequence_header = args.query_sequence
+
+    # Cargo el archivo con el alineamiento inicial que me pasa el usuario
+    currentAlignment = loadFile(file)
+
+    if(alignmentHasNMinSequences(currentAlignment, env_variables)):
+        # Obtengo las secuencias originales
+        ungappedSequences = getungappedSequences(currentAlignment)
+
+        # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
+        # Este alineamiento lo descarto, ya que no me sirve
+        currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
+
+        # Genero nuevos alineamientos y sus scores correspondientes
+        # Mientras aumente el score actual sigo aplicando los filtros
+        bestAlignment = currentAlignment
+        bestScore = currentScore
+        better = True
+        print("Current Alignment: " + str(len(currentAlignment)))
+        while(better):
+            lastAlignment = currentAlignment
+            lastScore = currentScore
+            # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
+            print("FILTER 1")
+            alignmentFiltered = filterAlignment(lastAlignment, query_sequence_header, env_variables)
+            currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
+            print("Current Alignment: " + str(len(currentAlignment)))
+            if(currentScore > lastScore):
+                bestAlignment = currentAlignment
+                bestScore = currentScore
+                lastScore = currentScore
+                lastAlignment = currentAlignment
+                print("MEJORO 😁")
+            else:
+                print("NO MEJORO 😨")
+                # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
+                print("FILTER 2")
+                alignmentFiltered = filterAlignmentAlternative(lastAlignment, query_sequence_header, env_variables)
+                currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
+                print("Current Alignment: " + str(len(currentAlignment)))
+                if(currentScore > lastScore):
+                    bestAlignment = currentAlignment
+                    bestScore = currentScore
+                    lastScore = currentScore
+                    lastAlignment = currentAlignment
+                    print("MEJORO 😀")
+                else:
+                    # TODO: Aqui se podria agregar un tercer filtrado (ver el agregado de homologas en otra situacion que no sea al llegar al nMin)
+                    # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
+                    better = False
+                    print("NO MEJORO 😖")
+
+        print(len(bestAlignment))
+        print(bestScore)
+
+        # Genero el árbol filogenético y lo retorno
+        tree = generateTree(bestAlignment)
+
+        # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
+        # TODO: Hacer que el arbol se genere de verdad
+
+        return tree
+    else:
+        printAndLog('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
+        ' and it is less than the minimum of sequences established for the alignment')
+
 
 def loadFile(filename):
     # Validar path
@@ -51,13 +123,13 @@ def calculateScore(alignment):
     return finalScore
 
 
-def filterAlignment(anAlignment):
+def filterAlignment(anAlignment, query_sequence_header, env_variables):
     lenSeq = len(anAlignment[0].seq)
     # Tomo el valor que voy a cortar del inicio y del final para sacar los purificadores
     
     nToRemove = env_variables[PURIFY_AMINO]
     # Agarro la sequencia query
-    querySeq = anAlignment[env_variables[QUERY_SEQUENCE]]
+    querySeq = find_alignment_by_header(anAlignment, query_sequence_header)
     # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
     if lenSeq > (nToRemove*2):
         start = nToRemove
@@ -84,20 +156,21 @@ def filterAlignment(anAlignment):
         if count > countSeqToRemove:
             countSeqToRemove = count
             seqToRemove = anAlignment[x]
-    printAndLog("Sequence {id} has been removed from the alignment.".format(
-        id=seqToRemove.id))
+    printAndLog("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
     sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
     printAndLog(str(len(sequences)) + " sequences left.")
     print("Current Alignment: " + str(len(sequences)))
-    response = checkToAdd(querySeq, sequences)
+    response = checkToAdd(querySeq, sequences, env_variables[MIN_SEQUENCES])
     print("Current Alignment: " + str(len(response)))
     return response
 
 
-def filterAlignmentAlternative(anAlignment):
+def filterAlignmentAlternative(anAlignment, query_sequence_header, env_variables):
     # Saco la secuencia que tiene mas gaps
-    querySeq = anAlignment[env_variables[QUERY_SEQUENCE]]
+    querySeq = find_alignment_by_header(anAlignment, query_sequence_header)
+    min_sequences = env_variables[MIN_SEQUENCES]
     mostGappedSeq = anAlignment[1]
+
     for ind in range(2,len(anAlignment)):
         mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
     printAndLog("Sequence {id} has been removed from the alignment.".format(
@@ -105,15 +178,15 @@ def filterAlignmentAlternative(anAlignment):
     sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
     printAndLog(str(len(sequences)) + " sequences left.")
     print("Current Alignment: " + str(len(sequences)))
-    response = checkToAdd(querySeq, sequences)
+    response = checkToAdd(querySeq, sequences, min_sequences)
     print("Current Alignment: " + str(len(response)))
     return response
 
 
-def checkToAdd(seqQuery, sequences):
+def checkToAdd(seqQuery, sequences, min_sequences):
     # Por ahora agregamos para seguir manteniento el nMin
     # Mas adelante tendremos que agregar en otros momentos
-    if len(sequences) < env_variables[MIN_SEQUENCES]:
+    if len(sequences) < min_sequences:
         seqAux = selectSequenceToAdd(seqQuery, sequences)
         sequences.push(seqAux)
     return sequences
@@ -130,7 +203,7 @@ def selectSequenceToAdd(seqQuery, sequences):
             return seq
 
 
-def alignmentHasNMinSequences(sequences):
+def alignmentHasNMinSequences(sequences, env_variables):
     return len(sequences) >= env_variables[MIN_SEQUENCES]
 
 
@@ -211,6 +284,7 @@ def getHomologuesSequencesOrderedByMaxScore(seqQuery):
     return result
 
 
+# TODO: Los metodos calculateScorePar, scorePar y compareCost nunca se usan
 def calculateScorePar(sequences):
     score = 0
     for u in range(0, len(sequences)):
@@ -227,9 +301,13 @@ def scorePar(u, v):
 
 
 def compareCost(u, v):
-    match = env_variables[MATCH]
-    mismatch = env_variables[MISMATCH]
-    gap = env_variables[GAP_PENALTY]
+    # match = env_variables[MATCH]
+    # mismatch = env_variables[MISMATCH]
+    # gap = env_variables[GAP_PENALTY]
+    match = 1
+    mismatch = -1
+    gap = -1
+
     if (u == v):
         return match
     else:
@@ -270,3 +348,23 @@ def getSequencesOrderedByMaxScore(seqQuery,output):
 def takeSecond(elem):
     return elem[1]
 
+def generateNewAlignmentAndScore(alignmentFiltered):
+    ungappedSequences = getungappedSequences(alignmentFiltered)
+    currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
+    currentAlignment = loadCurrentAlignment()
+    return currentAlignment, currentScore
+
+def query_yes_no(question):
+
+    print(f"{question} (y/n):")
+    input_value = input()
+
+    if input_value is None:
+        raise ValueError(f"invalid default answer: '{input_value}'")
+    if input_value.lower() in VALID_QUERY_YES:
+        return True
+    elif input_value.lower() in NOT_VALID_QUERY_NO:
+        return False
+    else:
+        print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
+        query_yes_no(question)
