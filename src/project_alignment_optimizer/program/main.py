@@ -124,6 +124,7 @@ def _aligh(args):
                 lastAlignment = currentAlignment
                 print("MEJORO 😁")
             else:
+                print("NO MEJORO 😨")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 print("FILTER 2")
                 alignmentFiltered = func.filterAlignmentAlternative(lastAlignment)

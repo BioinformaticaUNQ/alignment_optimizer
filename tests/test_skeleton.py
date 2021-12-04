@@ -5,8 +5,8 @@ import os
 
 from project_alignment_optimizer.main import main
 from project_alignment_optimizer.fib_model import fib
-from project_alignment_optimizer import fib_model
-from project_alignment_optimizer.program import functions,variables
+#from project_alignment_optimizer import fib_model
+#from project_alignment_optimizer.program import functions,variables
 
 __author__ = "ItuFede"
 __copyright__ = "ItuFede"

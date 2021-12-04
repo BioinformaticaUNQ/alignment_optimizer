@@ -1,6 +1,6 @@
 import pytest
 
-from project_alignment_optimizer.program import functions
+from src.project_alignment_optimizer.program import functions
 
 
 def test_filtrado():
