@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, PURIFY_AMINO, QUERY_SEQUENCE
 import project_alignment_optimizer.program.variables_service as variables_service
 import logging as log
 import pathlib
@@ -227,9 +227,9 @@ def scorePar(u, v):
 
 
 def compareCost(u, v):
-    match = 1  # var.match()
-    mismatch = -1  # var.mismatch()
-    gap = -1  # var.gapPenalty()
+    match = env_variables[MATCH]
+    mismatch = env_variables[MISMATCH]
+    gap = env_variables[GAP_PENALTY]
     if (u == v):
         return match
     else:
