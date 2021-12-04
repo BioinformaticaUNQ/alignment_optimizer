@@ -120,6 +120,9 @@ def _aligh(args):
             if(currentScore > lastScore):
                 bestAlignment = currentAlignment
                 bestScore = currentScore
+                lastScore = currentScore
+                lastAlignment = currentAlignment
+                print("MEJORO 😁")
             else:
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 print("FILTER 2")
@@ -129,12 +132,14 @@ def _aligh(args):
                 if(currentScore > lastScore):
                     bestAlignment = currentAlignment
                     bestScore = currentScore
-                    print("MEJORO")
+                    lastScore = currentScore
+                    lastAlignment = currentAlignment
+                    print("MEJORO 😀")
                 else:
                     # TODO: Aqui se podria agregar un tercer filtrado (ver el agregado de homologas en otra situacion que no sea al llegar al nMin)
                     # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
                     better = False
-                    print("NO MEJORO")
+                    print("NO MEJORO 😖")
 
         print(len(bestAlignment))
         print(bestScore)

@@ -82,6 +82,7 @@ def filterAlignment(anAlignment):
             if seq[y] != '-':
                 count += 1
         if count > countSeqToRemove:
+            countSeqToRemove = count
             seqToRemove = anAlignment[x]
     printAndLog("Sequence {id} has been removed from the alignment.".format(
         id=seqToRemove.id))

@@ -47,4 +47,4 @@ def resetDefaultValues():
     setVariableEnv(QUERY_SEQUENCE, 0)
     setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, 0)
     setVariableEnv(DB_BLAST, 0)
-    setVariableEnv(PURIFY_AMINO, 0)
+    setVariableEnv(PURIFY_AMINO, 20)
