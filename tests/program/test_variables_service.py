@@ -46,7 +46,7 @@ def test_getDictVariablesWithAllInfo():
     assert variables_service.getVariableIntEnv(PURIFY_AMINO) == dictVariablesWithAllInfo[PURIFY_AMINO]['CURRENT_VALUE']
 
 def test_tables_cant_be_tested():
-    variables_service.getAllVariablesTable(SimpleNamespace(**{'file':None, 'query_sequence':None}))
+    variables_service.getAllVariablesTable(SimpleNamespace(**{'file':None, 'query_sequence_header':None}))
     variables_service.getAllVariablesTableWithDescription()
 
 def test_config_set_key_new_value_if():

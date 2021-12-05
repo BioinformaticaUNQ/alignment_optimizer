@@ -19,8 +19,8 @@ FILE_FORMAT_TYPE = { 0:'fasta' }
 MIN_SEQUENCES = 'MIN_SEQUENCES'
 MIN_SEQUENCES_DESCRIPTION = "Define el numero minimo de secuencias que tiene que tener el alineamiento."
 
-QUERY_SEQUENCE = 'QUERY_SEQUENCE'
-QUERY_SEQUENCE_DESCRIPTION = "Define la posicion en el array de la Secuencia Query."
+QUERY_SEQUENCE_HEADER = 'QUERY_SEQUENCE_HEADER'
+QUERY_SEQUENCE_HEADER_DESCRIPTION = "Define la posicion en el array de la Secuencia Query."
 
 DB_HOMOLOGOUS_SEQUENCES = 'DB_HOMOLOGOUS_SEQUENCES'
 DB_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Define de donde obtendremos las secuencias homologas, siendo: 0 -> base de datos local, 1 -> BLAST."

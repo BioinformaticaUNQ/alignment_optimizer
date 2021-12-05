@@ -27,7 +27,7 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
 def align(args, env_variables):
 
     file = args.file
-    query_sequence_header = args.query_sequence
+    query_sequence_header = args.query_sequence_header
 
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     currentAlignment = loadFile(file)

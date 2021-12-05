@@ -23,7 +23,7 @@ $ python src/project_alignment_optimizer/program/main.py
 
 # COMMANDS:
 # Run alignment:
-$ python src/project_alignment_optimizer/program/main.py align -f {FILE_PATH.fasta} -qs {QUERY_SEQUENCE}
+$ python src/project_alignment_optimizer/program/main.py align -f {FILE_PATH.fasta} -qs {QUERY_SEQUENCE_HEADER}
 
 # Run config -h (get config helper):
 $ python src/project_alignment_optimizer/program/main.py config -h

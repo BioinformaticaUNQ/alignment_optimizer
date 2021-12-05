@@ -1,7 +1,7 @@
 import os
 import dotenv
 from prettytable import PrettyTable
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PATH, RESET_VALUES
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PATH, QUERY_SEQUENCE_HEADER, RESET_VALUES
 
 dotenv_file = dotenv.find_dotenv('config.env')
 dotenv.load_dotenv(dotenv_file)
@@ -40,7 +40,7 @@ def getAllVariablesTable(args):
     dictVariables = getDictVariablesWithAllInfo()
 
     table.add_row([PATH, args.file])
-    table.add_row([QUERY_SEQUENCE, args.query_sequence])
+    table.add_row([QUERY_SEQUENCE_HEADER, args.query_sequence_header])
 
     for variable_env_name in dictVariables.keys():
         if dictVariables[variable_env_name]['TYPE']:

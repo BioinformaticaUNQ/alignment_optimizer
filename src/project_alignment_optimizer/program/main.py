@@ -52,12 +52,12 @@ class AlignmentOptimazer(object):
 
         parser.add_argument('-f', '--file',
                             type=str,
-                            help='File fasta format',
+                            help='Path to the align file',
                             required=True)
 
-        parser.add_argument('-qs', '--query_sequence',
+        parser.add_argument('-qs', '--query_sequence_header',
                             type=str,
-                            help='Define the query sequence',
+                            help='Query sequence header name',
                             required=True)
 
         args = parser.parse_args(sys.argv[2:])
