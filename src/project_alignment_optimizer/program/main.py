@@ -1,7 +1,6 @@
 # coding=utf-8
-import pathlib
 import project_alignment_optimizer.program.variables_service as variables_service
-import functions as func
+import project_alignment_optimizer.program.functions as func
 import logging as log
 import argparse
 import sys
@@ -54,13 +53,12 @@ class AlignmentOptimazer(object):
         parser.add_argument('-f', '--file',
                             type=str,
                             help='File fasta format',
-                            required=True,
-                            default=(str(pathlib.Path().resolve()) + '/alignment.fasta')) # TODO: Delete this row
+                            required=True)
 
         parser.add_argument('-qs', '--query_sequence',
                             type=str,
                             help='Define the query sequence',
-                            required=True,)
+                            required=True)
 
         args = parser.parse_args(sys.argv[2:])
         _align(args)
@@ -113,7 +111,9 @@ def _config(args):
         variables_service.resetDefaultValues()
         print('File config.env restored to default values.')
     if args.key and args.value:
-        variables_service.config_set_key_new_value(args)
+        was_configured = variables_service.config_set_key_new_value(args)
+        if not was_configured:
+            exit(1)
 
 
 def _view_config():

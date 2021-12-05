@@ -1,7 +1,7 @@
 import os
 import dotenv
 from prettytable import PrettyTable
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PATH
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, QUERY_SEQUENCE, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PATH, RESET_VALUES
 
 dotenv_file = dotenv.find_dotenv('config.env')
 dotenv.load_dotenv(dotenv_file)
@@ -9,6 +9,9 @@ dotenv.load_dotenv(dotenv_file)
 def getVariableIntEnv(key):
     return int(os.environ[key])
 
+def setVariableEnv(key, value):
+    dotenv.set_key(dotenv_file, key, str(value))
+    
 def getDictVariablesValues():
     dictVariablesValues = {}
     # Recorre todas las variables del .env
@@ -30,8 +33,6 @@ def getDictVariablesWithAllInfo():
 
     return dictVariablesInfo
 
-def setVariableEnv(key, value):
-    dotenv.set_key(dotenv_file, key, str(value))
 
 def getAllVariablesTable(args):
     table = PrettyTable(['Key', 'Current value'])
@@ -67,16 +68,17 @@ def config_set_key_new_value(args):
     if key_upper in ALL_ENV_VARIABLES:
         setVariableEnv(key_upper, args.value)
         print(f"Key '{key_upper}' was modified correctly, new value = {args.value}.")
+        return True
     else:
         print(f'Key Unrecognized, valid keys:{ALL_ENV_VARIABLES}')
-        exit(1)
+        return False
 
 def resetDefaultValues():
-    setVariableEnv(MATCH, 1)
-    setVariableEnv(MISMATCH, -1)
-    setVariableEnv(GAP_PENALTY, -1)
-    setVariableEnv(FILE_FORMAT, -1)
-    setVariableEnv(MIN_SEQUENCES, 50)
-    setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, 0)
-    setVariableEnv(DB_BLAST, 0)
-    setVariableEnv(PURIFY_AMINO, 20)
+    setVariableEnv(MATCH, RESET_VALUES[MATCH])
+    setVariableEnv(MISMATCH, RESET_VALUES[MISMATCH])
+    setVariableEnv(GAP_PENALTY, RESET_VALUES[GAP_PENALTY])
+    setVariableEnv(FILE_FORMAT, RESET_VALUES[FILE_FORMAT])
+    setVariableEnv(MIN_SEQUENCES, RESET_VALUES[MIN_SEQUENCES])
+    setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, RESET_VALUES[DB_HOMOLOGOUS_SEQUENCES])
+    setVariableEnv(DB_BLAST, RESET_VALUES[DB_BLAST])
+    setVariableEnv(PURIFY_AMINO, RESET_VALUES[PURIFY_AMINO])

@@ -53,3 +53,14 @@ QUERY_RUN_ALIGN = 'Are you sure you want to run the alignment with these setting
 VALID_QUERY_YES = {"yes": True, "y": True, '': True}
 NOT_VALID_QUERY_NO = {"no": False, "n": False}
 
+# Reset values
+RESET_VALUES = {
+    MATCH: 1,
+    MISMATCH: -1,
+    GAP_PENALTY: -1,
+    FILE_FORMAT: 0,
+    MIN_SEQUENCES: 50,
+    DB_HOMOLOGOUS_SEQUENCES: 0,
+    DB_BLAST: 0,
+    PURIFY_AMINO: 0
+}
