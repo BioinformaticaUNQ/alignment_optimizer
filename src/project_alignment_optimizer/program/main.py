@@ -11,12 +11,7 @@ from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN
 # ---------------------
 # Logs
 # ---------------------
-log.basicConfig(filename='alignment_optimizer.log',
-                format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
-log.debug('Probando debug')
-log.info('Probando info')
-log.warning('Probando warning')
-log.error('Probando error')
+log.basicConfig(filename='alignment_optimizer.log', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
 
 
 # ---------------------
