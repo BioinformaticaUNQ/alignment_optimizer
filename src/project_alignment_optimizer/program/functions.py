@@ -27,11 +27,11 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
 def align(args, env_variables):
 
     printAndLog("---------------------------------------")
-    file = args.file
+    fileName = args.file
     query_sequence_header = args.query_sequence_header
 
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
-    currentAlignment = loadFile(file)
+    currentAlignment = loadFile(fileName)
     printAndLog("---------------------------------------")
 
     if(alignmentHasNMinSequences(currentAlignment, env_variables)):
@@ -60,7 +60,7 @@ def align(args, env_variables):
             lastScore = currentScore
             printAndLog("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
-            printAndLog("FILTER 1 (Sequence that provides most gaps to the Query Sequence):")
+            printAndLog("FILTER 1 (Sequence that introduces most gaps to the Query Sequence):")
             alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, query_sequence_header, env_variables, homologousSequences)
             currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
             printAndLog("Current Alignment: " + str(len(currentAlignment)))
@@ -69,9 +69,9 @@ def align(args, env_variables):
                 bestScore = currentScore
                 lastScore = currentScore
                 lastAlignment = currentAlignment
-                printAndLog("MEJORO 😁")
+                printAndLog("The alignment score improved 😁")
             else:
-                printAndLog("NO MEJORO 😨")
+                printAndLog("The alignment score didn't improve 😨")
                 printAndLog("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLog("FILTER 2 (Sequence with most gaps):")
@@ -83,9 +83,9 @@ def align(args, env_variables):
                     bestScore = currentScore
                     lastScore = currentScore
                     lastAlignment = currentAlignment
-                    printAndLog("MEJORO 😀")
+                    printAndLog("The alignment score improved 😀")
                 else:
-                    printAndLog("NO MEJORO 😨")
+                    printAndLog("The alignment score didn't improve 😨")
                     printAndLog("---------------------------------------")
                     # Hago el tercer filtrado (Agrego una secuencia homologa para ver si mejora el alineamiento)
                     printAndLog("FILTER 3 (Add a Homologous Sequence):")
@@ -101,15 +101,15 @@ def align(args, env_variables):
                         bestScore = currentScore
                         lastScore = currentScore
                         lastAlignment = currentAlignment
-                        printAndLog("MEJORO 😀")
+                        printAndLog("The alignment score improved 😀")
                         printAndLog("---------------------------------------")
                     else:
                         # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
                         better = False
-                        printAndLog("NO MEJORO 😖")
+                        printAndLog("The alignment score didn't improve 😖")
                         printAndLog("---------------------------------------")
 
-        printAndLog("The best alignment we obtained is " + str(len(bestAlignment)) + " sequences")
+        printAndLog("The best alignment obtained contains " + str(len(bestAlignment)) + " sequences")
         printAndLog("The final score is " + str(bestScore))
         printAndLog("---------------------------------------")
 
@@ -119,7 +119,8 @@ def align(args, env_variables):
         printAndLog("---------------------------------------")
         printAndLog("---------------------------------------")
 
-        # TODO: Exportar el alineamiento final, a un path dado en los argumentos?
+        exportFinalAlignment(bestAlignment, fileName)
+        
         # TODO: Hacer que el arbol se genere de verdad
 
         return tree
@@ -219,7 +220,7 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header
         response = checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences)
         return response
     else:
-        printAndLog("It cannot be filtered because there are no more homologous sequences to add and the minimum has already been reached")
+        printAndLog("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
         return anAlignment
 
 
@@ -241,7 +242,7 @@ def filterSequenceWithMostGaps(anAlignment, query_sequence_header, env_variables
         response = checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences)
         return response
     else:
-        printAndLog("It cannot be filtered because there are no more homologous sequences to add and the minimum has already been reached")
+        printAndLog("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
         return anAlignment
 
 
@@ -386,6 +387,13 @@ def generateNewAlignmentAndScore(alignmentFiltered):
     currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
     currentAlignment = loadCurrentAlignment()
     return currentAlignment, currentScore
+
+def exportFinalAlignment(bestAlignment, filename):
+    dir = str(pathlib.Path(filename).parent.resolve())
+    name = str(pathlib.Path(filename).name).split(".")[0]
+    output = dir + "/" + name + "_output.fasta"
+    AlignIO.write(bestAlignment, (output), "fasta")
+    printAndLog(f"Output exported as {output}")
 
 def query_yes_no(question):
 
