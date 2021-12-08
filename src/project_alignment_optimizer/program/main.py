@@ -54,7 +54,7 @@ class AlignmentOptimazer(object):
                             type=str,
                             help='Query sequence header name',
                             required=True)
-
+        print(sys.argv)
         args = parser.parse_args(sys.argv[2:])
         _align(args)
 
