@@ -169,12 +169,8 @@ def getHomologousSequences(querySeq, sequences, env_variables):
     printAndLog(str(len(response)) + " homologous sequences were obtained correctly")
     return response
 
-
-def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header, env_variables, homologousSequences):
-    min_sequences = env_variables[MIN_SEQUENCES]
-    condition1 = len(anAlignment) > min_sequences
-    condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
-    if condition1 or condition2:
+def sequenceProvidesMostGaps(anAlignment, query_sequence_header, env_variables):
+    
         lenSeq = len(anAlignment[0].seq)
         # Tomo el valor que voy a cortar del inicio y del final para sacar los purificadores
         
@@ -207,6 +203,15 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header
             if count > countSeqToRemove:
                 countSeqToRemove = count
                 seqToRemove = anAlignment[x]
+        return seqToRemove
+    
+
+def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header, env_variables, homologousSequences):
+    min_sequences = env_variables[MIN_SEQUENCES]
+    condition1 = len(anAlignment) > min_sequences
+    condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
+    if condition1 or condition2:
+        seqToRemove = sequenceProvidesMostGaps(anAlignment, query_sequence_header, env_variables)
         printAndLog("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
         sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
         printAndLog(str(len(sequences)) + " sequences left.")

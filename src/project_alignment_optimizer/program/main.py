@@ -48,13 +48,15 @@ class AlignmentOptimazer(object):
         parser.add_argument('-f', '--file',
                             type=str,
                             help='Path to the align file',
-                            required=True)
+                            required=False,
+                            default='alignment.fasta')
 
         parser.add_argument('-qs', '--query_sequence_header',
                             type=str,
                             help='Query sequence header name',
-                            required=True)
-
+                            required=False,
+                            default= '6QA2_A')
+                            
         args = parser.parse_args(sys.argv[2:])
         _align(args)
 
