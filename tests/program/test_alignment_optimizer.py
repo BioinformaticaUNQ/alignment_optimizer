@@ -43,6 +43,7 @@ def test_filter_aligment_with_more_amount_of_aacc():
    env_variables = variables_service.getDictVariablesValues()
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables)
    #valido que esa despues del primer filtrado no se encuentra 
+   breakpoint()
    aligment_filtered = functions.filterSequenceThatProvidesMostGapsToQuery(currentAlignment, '6QA2_A', env_variables, homologousSequences)
    
   
