@@ -21,24 +21,25 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
         if alignment.id == query_sequence_header:
             return alignment
     
-    print(f"The header {query_sequence_header} has not been found.")
+    printAndLogCritical(f"The header {query_sequence_header} has not been found.")
     sys.exit()
 
 def align(args, env_variables):
 
-    printAndLog("---------------------------------------")
+    printAndLogInfo("---------------------------------------")
     fileName = args.file
     query_sequence_header = args.query_sequence_header
 
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     currentAlignment = loadFile(fileName)
-    printAndLog("---------------------------------------")
+    printAndLogInfo("---------------------------------------")
 
     if(alignmentHasNMinSequences(currentAlignment, env_variables)):
         # Obtengo las secuencias homologas
         querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
+        printAndLogInfo("Query Sequence: " + querySeq.id)
         homologousSequences = getHomologousSequences(querySeq, currentAlignment, env_variables)
-        printAndLog("---------------------------------------")
+        printAndLogInfo("---------------------------------------")
 
         # Obtengo las secuencias originales
         # TODO: Mejorar?
@@ -54,78 +55,79 @@ def align(args, env_variables):
         bestAlignment = currentAlignment
         bestScore = currentScore
         better = True
-        printAndLog("Current Alignment: " + str(len(currentAlignment)))
+        printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
         while(better):
             lastAlignment = currentAlignment
             lastScore = currentScore
-            printAndLog("---------------------------------------")
+            printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
-            printAndLog("FILTER 1 (Sequence that introduces most gaps to the Query Sequence):")
+            printAndLogInfo("FILTER 1 (Sequence that introduces most gaps to the Query Sequence):")
             alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, query_sequence_header, env_variables, homologousSequences)
             currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-            printAndLog("Current Alignment: " + str(len(currentAlignment)))
+            printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
             if(currentScore > lastScore):
                 bestAlignment = currentAlignment
                 bestScore = currentScore
                 lastScore = currentScore
                 lastAlignment = currentAlignment
-                printAndLog("The alignment score improved 😁")
+                printAndLogInfo("The alignment score improved 😁")
             else:
-                printAndLog("The alignment score didn't improve 😨")
-                printAndLog("---------------------------------------")
+                printAndLogInfo("The alignment score didn't improve 😨")
+                printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
-                printAndLog("FILTER 2 (Sequence with most gaps):")
+                printAndLogInfo("FILTER 2 (Sequence with most gaps):")
                 alignmentFiltered = filterSequenceWithMostGaps(lastAlignment, query_sequence_header, env_variables, homologousSequences)
                 currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-                printAndLog("Current Alignment: " + str(len(currentAlignment)))
+                printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
                 if(currentScore > lastScore):
                     bestAlignment = currentAlignment
                     bestScore = currentScore
                     lastScore = currentScore
                     lastAlignment = currentAlignment
-                    printAndLog("The alignment score improved 😀")
+                    printAndLogInfo("The alignment score improved 😀")
                 else:
-                    printAndLog("The alignment score didn't improve 😨")
-                    printAndLog("---------------------------------------")
+                    printAndLogInfo("The alignment score didn't improve 😨")
+                    printAndLogInfo("---------------------------------------")
                     # Hago el tercer filtrado (Agrego una secuencia homologa para ver si mejora el alineamiento)
-                    printAndLog("FILTER 3 (Add a Homologous Sequence):")
+                    printAndLogInfo("FILTER 3 (Add a Homologous Sequence):")
                     if len(homologousSequences) > 0:
                         alignmentFiltered = addHomologousSequence(lastAlignment, homologousSequences)
                         currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-                        printAndLog("Current Alignment: " + str(len(currentAlignment)))
+                        printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
                     else:
-                        printAndLog("There are no more homologous sequences to add")
+                        printAndLogInfo("There are no more homologous sequences to add")
                         currentAlignment , currentScore = lastAlignment, lastScore
                     if(currentScore > lastScore):
                         bestAlignment = currentAlignment
                         bestScore = currentScore
                         lastScore = currentScore
                         lastAlignment = currentAlignment
-                        printAndLog("The alignment score improved 😀")
-                        printAndLog("---------------------------------------")
+                        printAndLogInfo("The alignment score improved 😀")
                     else:
                         # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
                         better = False
-                        printAndLog("The alignment score didn't improve 😖")
-                        printAndLog("---------------------------------------")
+                        printAndLogInfo("The alignment score didn't improve 😖")
+                        printAndLogInfo("---------------------------------------")
 
-        printAndLog("The best alignment obtained contains " + str(len(bestAlignment)) + " sequences")
-        printAndLog("The final score is " + str(bestScore))
-        printAndLog("---------------------------------------")
+        printAndLogInfo("The best alignment obtained contains " + str(len(bestAlignment)) + " sequences")
+        printAndLogInfo("The final score is " + str(bestScore))
+        printAndLogInfo("---------------------------------------")
 
         # Genero el árbol filogenético y lo retorno
         tree = generateTree(bestAlignment)
-        printAndLog("Phylogenetic tree generated correctly")
-        printAndLog("---------------------------------------")
-        printAndLog("---------------------------------------")
+        printAndLogInfo("---------------------------------------")
+        printAndLogInfo("---------------------------------------")
 
         exportFinalAlignment(bestAlignment, fileName)
+
+        printAndLogInfo("---------------------------------------")
+        printAndLogInfo("---------------------------------------")
         
         # TODO: Hacer que el arbol se genere de verdad
 
         return tree
     else:
-        printAndLog('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
+        printAndLogInfo('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
         ' and it is less than the minimum of sequences established for the alignment')
 
 
@@ -135,24 +137,26 @@ def loadFile(filename):
     # Validar que sea la cantidad de secuencias sea mayor al valor minimo
     # Obtengo el archivo con el alineamiento inicial
     checkIsValidPath(filename)
-    printAndLog("Getting Alignments")
+    printAndLogInfo("Getting Alignments")
     with open(filename, "r") as handle:
+        # TODO: rompe si le paso otro archivo
         originalAlignment = AlignIO.read(handle, "fasta")
         if (any(originalAlignment)):
-            printAndLog(str(len(originalAlignment)) + " aligned sequences were obtained correctly")
+            printAndLogInfo(str(len(originalAlignment)) + " aligned sequences were obtained correctly")
             return originalAlignment
         else:
-            print("Invalid file format")
+            printAndLogCritical("Invalid file format")
+            sys.exit()
 
 
 def checkIsValidPath(filename):
     if not os.path.isfile(filename):
-        print("Invalid file path")
+        printAndLogCritical("Invalid file path")
         sys.exit()
 
 
 def getHomologousSequences(querySeq, sequences, env_variables):
-    printAndLog("Getting Homologous Sequences")
+    printAndLogInfo("Getting Homologous Sequences")
     db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
     if db_hs == 0:
         # TODO: Tendiamos que buscar en la base de datos local
@@ -167,7 +171,7 @@ def getHomologousSequences(querySeq, sequences, env_variables):
     for ind in range(1,len(sequences)):
         response = list(filter(lambda seq: seq.id != sequences[ind].id, response))
 
-    printAndLog(str(len(response)) + " homologous sequences were obtained correctly")
+    printAndLogInfo(str(len(response)) + " homologous sequences were obtained correctly")
     return response
 
 
@@ -208,14 +212,14 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header
             if count > countSeqToRemove:
                 countSeqToRemove = count
                 seqToRemove = anAlignment[x]
-        printAndLog("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
+        printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
         sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
-        printAndLog(str(len(sequences)) + " sequences left.")
-        printAndLog("Current Alignment: " + str(len(sequences)))
+        printAndLogInfo(str(len(sequences)) + " sequences left.")
+        printAndLogInfo("Current Alignment: " + str(len(sequences)))
         response = checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences)
         return response
     else:
-        printAndLog("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
+        printAndLogInfo("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
         return anAlignment
 
 
@@ -230,14 +234,14 @@ def filterSequenceWithMostGaps(anAlignment, query_sequence_header, env_variables
 
         for ind in range(2,len(anAlignment)):
             mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
-        printAndLog("Sequence {id} has been removed from the alignment.".format(id=mostGappedSeq.id))
+        printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=mostGappedSeq.id))
         sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
-        printAndLog(str(len(sequences)) + " sequences left.")
-        printAndLog("Current Alignment: " + str(len(sequences)))
+        printAndLogInfo(str(len(sequences)) + " sequences left.")
+        printAndLogInfo("Current Alignment: " + str(len(sequences)))
         response = checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences)
         return response
     else:
-        printAndLog("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
+        printAndLogInfo("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
         return anAlignment
 
 
@@ -252,7 +256,7 @@ def checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_seq
 def addHomologousSequence(sequences, homologousSequences):
     # Agrega una secuencia que no este y que no haya sido agregada previamente
     seqToAdd = homologousSequences.pop(0)
-    printAndLog(seqToAdd.id + " add to the Alignment")
+    printAndLogInfo(seqToAdd.id + " add to the Alignment")
     nNewSeq = len(seqToAdd.seq)
     nSeqAlignment = len(sequences[0].seq)
     nTotal = nSeqAlignment - nNewSeq
@@ -261,7 +265,7 @@ def addHomologousSequence(sequences, homologousSequences):
     # TODO: Mejorar?
     #response = sequences
     response.append(seqFinal)
-    printAndLog("Current Alignment: " + str(len(response)))
+    printAndLogInfo("Current Alignment: " + str(len(response)))
     return response
 
 
@@ -312,7 +316,7 @@ def generateAlignmentAndCalculateScore(originalSequences):
         CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"))
     clusalAlignmentOutput = command()
     score = parseScore(clusalAlignmentOutput[0])
-    printAndLog("New alignment Score: " + score)
+    printAndLogInfo("New alignment Score: " + score)
     return score
 
 
@@ -324,6 +328,7 @@ def loadCurrentAlignment():
 def generateTree(alignment):
     # Genero el árbol filogenético
     tree = alignment
+    printAndLogInfo("Phylogenetic tree generated correctly")
     return tree
 
 
@@ -343,11 +348,6 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery):
         output = Entrez.read(handle)
         result = getSequencesOrderedByMaxScore(seqQuery, output)
     return result
-
-
-def printAndLog(msg):
-    print(msg)
-    log.info(msg)
 
 
 def getIdsHomologousSequences(idProtein):
@@ -377,18 +377,21 @@ def getSequencesOrderedByMaxScore(seqQuery,output):
 def takeSecond(elem):
     return elem[1]
 
+
 def generateNewAlignmentAndScore(alignmentFiltered):
     ungappedSequences = getungappedSequences(alignmentFiltered)
     currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
     currentAlignment = loadCurrentAlignment()
     return currentAlignment, currentScore
 
+
 def exportFinalAlignment(bestAlignment, filename):
     dir = str(pathlib.Path(filename).parent.resolve())
     name = str(pathlib.Path(filename).name).split(".")[0]
     output = dir + "/" + name + "_output.fasta"
     AlignIO.write(bestAlignment, (output), "fasta")
-    printAndLog(f"Output exported as {output}")
+    printAndLogInfo(f"Output exported as {output}")
+
 
 def query_yes_no(question):
 
@@ -404,3 +407,23 @@ def query_yes_no(question):
     else:
         print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
         query_yes_no(question)
+
+
+def printAndLogInfo(msg):
+    print(msg)
+    log.info(msg)
+
+
+def printAndLogCritical(msg):
+    print(msg)
+    log.critical(msg)
+
+
+def printAndLogError(msg):
+    print(msg)
+    log.error(msg)
+
+
+def printAndLogWarning(msg):
+    print(msg)
+    log.warning(msg)
