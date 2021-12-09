@@ -62,7 +62,7 @@ def align(args, env_variables):
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
             printAndLogInfo("FILTER 1 (Sequence that introduces most gaps to the Query Sequence):")
-            alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, query_sequence_header, env_variables, homologousSequences)
+            alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, querySeq, env_variables, homologousSequences)
             currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
             printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
             if(currentScore > lastScore):
@@ -76,7 +76,7 @@ def align(args, env_variables):
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("FILTER 2 (Sequence with most gaps):")
-                alignmentFiltered = filterSequenceWithMostGaps(lastAlignment, query_sequence_header, env_variables, homologousSequences)
+                alignmentFiltered = filterSequenceWithMostGaps(lastAlignment, querySeq, env_variables, homologousSequences)
                 currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
                 printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
                 if(currentScore > lastScore):
@@ -175,7 +175,7 @@ def getHomologousSequences(querySeq, sequences, env_variables):
     return response
 
 
-def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header, env_variables, homologousSequences):
+def filterSequenceThatProvidesMostGapsToQuery(anAlignment, querySeq, env_variables, homologousSequences):
     min_sequences = env_variables[MIN_SEQUENCES]
     condition1 = len(anAlignment) > min_sequences
     condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
@@ -184,8 +184,6 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header
         # Tomo el valor que voy a cortar del inicio y del final para sacar los purificadores
         
         nToRemove = env_variables[PURIFY_AMINO]
-        # Agarro la sequencia query
-        querySeq = find_alignment_by_header(anAlignment, query_sequence_header)
         # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
         if lenSeq > (nToRemove*2):
             start = nToRemove
@@ -200,16 +198,15 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header
             if querySeq.seq[i] == '-':
                 indices.append(i)
         # Recorro todas las secuencias y me voy quedando con los indices que esten en la lista
-        seqToRemove = anAlignment[1]
         countSeqToRemove = -1
-        for x in range(1,len(anAlignment)):
+        for x in range(0,len(anAlignment)):
             seq = anAlignment[x].seq
             count = 0
             for y in indices:
                 # Una vez obtenido esas secuencias filtradas, busco la que tenga mayor numero de aminoaciodos y esa es la que voy a eliminar
                 if seq[y] != '-':
                     count += 1
-            if count > countSeqToRemove:
+            if count > countSeqToRemove and querySeq.id != anAlignment[x].id:
                 countSeqToRemove = count
                 seqToRemove = anAlignment[x]
         printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
@@ -223,17 +220,21 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, query_sequence_header
         return anAlignment
 
 
-def filterSequenceWithMostGaps(anAlignment, query_sequence_header, env_variables, homologousSequences):
+def filterSequenceWithMostGaps(anAlignment, querySeq, env_variables, homologousSequences):
     min_sequences = env_variables[MIN_SEQUENCES]
     condition1 = len(anAlignment) > min_sequences
     condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
     if condition1 or condition2:
         # Saco la secuencia que tiene mas gaps
-        querySeq = find_alignment_by_header(anAlignment, query_sequence_header)
-        mostGappedSeq = anAlignment[1]
-
-        for ind in range(2,len(anAlignment)):
-            mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
+        if querySeq.id != anAlignment[0].id:
+                mostGappedSeq = anAlignment[0]
+                start = 1
+        else:
+            mostGappedSeq = anAlignment[1]
+            start = 2
+        for ind in range(start,len(anAlignment)):
+            if querySeq.id != anAlignment[ind].id:
+                mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
         printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=mostGappedSeq.id))
         sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
         printAndLogInfo(str(len(sequences)) + " sequences left.")
