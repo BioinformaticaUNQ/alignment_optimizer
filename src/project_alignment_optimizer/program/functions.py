@@ -61,7 +61,7 @@ def align(args, env_variables):
             lastScore = currentScore
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
-            printAndLogInfo("FILTER 1 (Sequence that introduces most gaps to the Query Sequence):")
+            printAndLogInfo("ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
             alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, querySeq, env_variables, homologousSequences)
             currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
             printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
@@ -75,7 +75,7 @@ def align(args, env_variables):
                 printAndLogInfo("The alignment score didn't improve 😨")
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
-                printAndLogInfo("FILTER 2 (Sequence with most gaps):")
+                printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
                 alignmentFiltered = filterSequenceWithMostGaps(lastAlignment, querySeq, env_variables, homologousSequences)
                 currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
                 printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
@@ -89,7 +89,7 @@ def align(args, env_variables):
                     printAndLogInfo("The alignment score didn't improve 😨")
                     printAndLogInfo("---------------------------------------")
                     # Hago el tercer filtrado (Agrego una secuencia homologa para ver si mejora el alineamiento)
-                    printAndLogInfo("FILTER 3 (Add a Homologous Sequence):")
+                    printAndLogInfo("ALGORITHM 3 - Add a Homologous Sequence to the Alignment:")
                     if len(homologousSequences) > 0:
                         alignmentFiltered = addHomologousSequence(lastAlignment, homologousSequences)
                         currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
