@@ -280,6 +280,8 @@ def mostGapped(aSequence, anotherSequence, aQuerySequence):
         return aSequence
     elif gaps(aSequence) == gaps(anotherSequence):
         aligner = Align.PairwiseAligner()
+        aligner.match_score = MATCH
+        aligner.mismatch_score = MISMATCH
         alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
         alignment2 = aligner.align(anotherSequence.seq.ungap(),aQuerySequence.seq.ungap())
         if alignment1.score < alignment2.score:
