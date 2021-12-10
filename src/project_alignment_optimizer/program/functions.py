@@ -46,7 +46,6 @@ def align(args, env_variables):
         printAndLogInfo("---------------------------------------")
 
         # Obtengo las secuencias originales
-        # TODO: Mejorar?
         seqsAux = c.deepcopy(currentAlignment)
         ungappedSequences = getungappedSequences(seqsAux)
 
@@ -118,7 +117,7 @@ def align(args, env_variables):
         printAndLogInfo("---------------------------------------")
 
         # Genero el árbol filogenético y lo retorno
-        tree = generateTree(bestAlignment)
+        generateTree(bestAlignment)
         printAndLogInfo("---------------------------------------")
         printAndLogInfo("---------------------------------------")
 
@@ -127,9 +126,6 @@ def align(args, env_variables):
         printAndLogInfo("---------------------------------------")
         printAndLogInfo("---------------------------------------")
         
-        # TODO: Hacer que el arbol se genere de verdad
-
-        return tree
     else:
         printAndLogInfo('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
         ' and it is less than the minimum of sequences established for the alignment')
@@ -143,7 +139,7 @@ def loadFile(filename):
     checkIsValidPath(filename)
     printAndLogInfo("Getting Alignments")
     with open(filename, "r") as handle:
-        # TODO: rompe si le paso otro archivo
+
         originalAlignment = AlignIO.read(handle, "fasta")
         if (any(originalAlignment)):
             printAndLogInfo(str(len(originalAlignment)) + " aligned sequences were obtained correctly")
@@ -161,17 +157,14 @@ def checkIsValidPath(filename):
 
 def getHomologousSequences(querySeq, sequences, env_variables):
     printAndLogInfo("Getting Homologous Sequences")
-    #db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
-    db_hs = 1
+    db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
     if db_hs == 0:
-        # TODO: Tendiamos que buscar en la base de datos local
         homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
     elif db_hs == 1:
         path = DB_HOMOLOGOUS_SEQUENCES_PATH
         if path:
             homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
        
-    # TODO: Mejorar?
     response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
     for ind in range(1,len(sequences)):
         response = list(filter(lambda seq: seq.id != sequences[ind].id, response))
@@ -279,7 +272,6 @@ def addHomologousSequence(sequences, homologousSequences):
     nTotal = nSeqAlignment - nNewSeq
     seqFinal = seqToAdd + Seq("-"*nTotal)
     response = list(filter(lambda seq: True, sequences)) 
-    # TODO: Mejorar?
     #response = sequences
     response.append(seqFinal)
     printAndLogInfo("Current Alignment: " + str(len(response)))
@@ -315,7 +307,6 @@ def gaps(aSequence):
 def getungappedSequences(anAlignment):
     # Obtengo del alineamiento pasado por parametro las secuencias originales
     # Para eso elimino todos los gaps
-    # TODO: Mejorar?
     baseSequences = []
     for sequence in anAlignment:
         sequence.seq = sequence.seq.ungap()
@@ -354,7 +345,6 @@ def generateTree(alignment):
     tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
     printAndLogInfo(tree)
     printAndLogInfo(Phylo.draw_ascii(tree))
-    return tree
 
 
 def getHomologousSequencesOrderedByMaxScore(seqQuery):

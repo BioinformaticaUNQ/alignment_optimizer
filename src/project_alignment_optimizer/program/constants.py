@@ -3,7 +3,6 @@ import pathlib
 # Constantes ENV string
 PATH = 'PATH'
 
-#########TODO: Se esta usando esto? ###############
 MATCH = 'MATCH'
 MATCH_DESCRIPTION = "Defines the score given for each character match in the alignment."
 
