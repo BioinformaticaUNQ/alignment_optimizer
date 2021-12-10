@@ -1,7 +1,7 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, PURIFY_AMINO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
-from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, DB_HOMOLOGOUS_SEQUENCES_PATH,GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, PURIFY_AMINO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
+from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
 from Bio.SeqRecord import SeqRecord
@@ -31,7 +31,11 @@ def align(args, env_variables):
     query_sequence_header = args.query_sequence_header
 
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
-    currentAlignment = loadFile(fileName)
+    try:
+        currentAlignment = loadFile(fileName)
+    except:
+         printAndLogInfo("Invalid fiel extension")
+         sys.exit() 
     printAndLogInfo("---------------------------------------")
 
     if(alignmentHasNMinSequences(currentAlignment, env_variables)):
@@ -157,15 +161,16 @@ def checkIsValidPath(filename):
 
 def getHomologousSequences(querySeq, sequences, env_variables):
     printAndLogInfo("Getting Homologous Sequences")
-    db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
+    #db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
+    db_hs = 1
     if db_hs == 0:
         # TODO: Tendiamos que buscar en la base de datos local
         homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
     elif db_hs == 1:
-        homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
-    else:
-        homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
-    
+        path = DB_HOMOLOGOUS_SEQUENCES_PATH
+        if path:
+            homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
+       
     # TODO: Mejorar?
     response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
     for ind in range(1,len(sequences)):
@@ -174,6 +179,17 @@ def getHomologousSequences(querySeq, sequences, env_variables):
     printAndLogInfo(str(len(response)) + " homologous sequences were obtained correctly")
     return response
 
+def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path):
+    try:
+        sequences = loadFile(path)
+        result = []
+        for seq in sequences:
+            result.append((seq,pairwise2.align.globalxx(querySeq.seq, seq.seq,score_only=True)))
+        result.sort(key=takeSecond,reverse=True)
+        return [i[0] for i in result] 
+    except:
+      printAndLogInfo("Invalid file extension homologous sequences")
+      sys.exit()
 
 def filterSequenceThatProvidesMostGapsToQuery(anAlignment, querySeq, env_variables, homologousSequences):
     min_sequences = env_variables[MIN_SEQUENCES]
@@ -330,8 +346,14 @@ def loadCurrentAlignment():
 
 def generateTree(alignment):
     # Genero el árbol filogenético
-    tree = alignment
-    printAndLogInfo("Phylogenetic tree generated correctly")
+    tempDir = str(pathlib.Path(__file__).parent.absolute())
+    SeqIO.write(alignment, (tempDir + "/finalAlignment.fasta"), "fasta")
+    command = ClustalwCommandline(
+        CLUSTALW_PATH, infile=(tempDir + "/finalAlignment.fasta"))
+    clusalAlignmentOutput = command()
+    tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
+    printAndLogInfo(tree)
+    printAndLogInfo(Phylo.draw_ascii(tree))
     return tree
 
 
