@@ -5,17 +5,17 @@ PATH = 'PATH'
 
 #########TODO: Se esta usando esto? ###############
 MATCH = 'MATCH'
-MATCH_DESCRIPTION = "Puntuacion entre dos caracteres iguales del alineamiento."
+MATCH_DESCRIPTION = "Defines the score given for each character match in the alignment."
 
 MISMATCH = 'MISMATCH'
-MISMATCH_DESCRIPTION = "Puntuacion entre dos caracteres desiguales del alineamiento."
+MISMATCH_DESCRIPTION = "Defines the score given for each character mismatch in the alignment."
 
 GAP_PENALTY = 'GAP_PENALTY'
-GAP_PENALTY_DESCRIPTION = "Penalidad de gap."
+GAP_PENALTY_DESCRIPTION = "Defines the penalty assigned for each gap opening in the alignment."
+###################################################
 
 QUERY_SEQUENCE_HEADER = 'QUERY_SEQUENCE_HEADER'
-QUERY_SEQUENCE_HEADER_DESCRIPTION = "Define la posicion en el array de la Secuencia Query."
-###################################################
+QUERY_SEQUENCE_HEADER_DESCRIPTION = "Defines the header to be used as query sequence when filtering."
 
 FILE_FORMAT  = 'FILE_FORMAT'
 FILE_FORMAT_DESCRIPTION = "Selects the file format of the input file. Currently only supports 0 (FASTA)."
