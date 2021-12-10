@@ -163,7 +163,11 @@ def getHomologousSequences(querySeq, sequences, env_variables):
     elif db_hs == 1:
         path = DB_HOMOLOGOUS_SEQUENCES_PATH
         if path:
+            checkIsValidPath(path)
             homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
+        else:
+            printAndLogCritical("Invalid db path")
+            sys.exit()
        
     response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
     for ind in range(1,len(sequences)):
