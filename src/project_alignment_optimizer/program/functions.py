@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -39,6 +39,10 @@ def align(args, env_variables):
     printAndLogInfo("---------------------------------------")
 
     if(alignmentHasNMinSequences(currentAlignment, env_variables)):
+
+        # Recorto, cuando corresponda, las secuencias purificadoras
+        currentAlignment = trimPurifyingSequences(currentAlignment, env_variables)
+
         # Obtengo las secuencias homologas
         querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
         printAndLogInfo("Query Sequence: " + querySeq.id)
@@ -89,38 +93,21 @@ def align(args, env_variables):
                     lastAlignment = currentAlignment
                     printAndLogInfo("The alignment score improved 😀")
                 else:
-                    printAndLogInfo("The alignment score didn't improve 😨")
+                    # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
+                    better = False
+                    printAndLogInfo("The alignment score didn't improve 😖")
                     printAndLogInfo("---------------------------------------")
-                    # Hago el tercer filtrado (Agrego una secuencia homologa para ver si mejora el alineamiento)
-                    printAndLogInfo("ALGORITHM 3 - Add a Homologous Sequence to the Alignment:")
-                    if len(homologousSequences) > 0:
-                        alignmentFiltered = addHomologousSequence(lastAlignment, homologousSequences)
-                        currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-                        printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
-                    else:
-                        printAndLogInfo("There are no more homologous sequences to add")
-                        currentAlignment , currentScore = lastAlignment, lastScore
-                    if(currentScore > lastScore):
-                        bestAlignment = currentAlignment
-                        bestScore = currentScore
-                        lastScore = currentScore
-                        lastAlignment = currentAlignment
-                        printAndLogInfo("The alignment score improved 😀")
-                    else:
-                        # Como no mejoro mas con ninguno de los filtrados termino con la busqueda
-                        better = False
-                        printAndLogInfo("The alignment score didn't improve 😖")
-                        printAndLogInfo("---------------------------------------")
 
         printAndLogInfo("The best alignment obtained contains " + str(len(bestAlignment)) + " sequences")
         printAndLogInfo("The final score is " + str(bestScore))
         printAndLogInfo("---------------------------------------")
 
-        # Genero el árbol filogenético y lo retorno
+        # Genero el árbol filogenético
         generateTree(bestAlignment)
-        printAndLogInfo("---------------------------------------")
+
         printAndLogInfo("---------------------------------------")
 
+        # Exportamos el alineamiento final, el árbol y el log
         exportFinalAlignment(bestAlignment, fileName)
 
         printAndLogInfo("---------------------------------------")
@@ -153,6 +140,39 @@ def checkIsValidPath(filename):
     if not os.path.isfile(filename):
         printAndLogCritical("Invalid file path")
         sys.exit()
+
+
+def trimPurifyingSequences(anAlignment, env_variables):
+    removeStart = env_variables[PURIFY_START]
+    removeEnd = env_variables[PURIFY_END]
+    if removeStart > 0 or removeEnd > 0:
+        lenSeq = len(anAlignment[0].seq)
+        # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
+        if lenSeq > (removeStart + removeEnd):
+            alignment = []
+            printAndLogInfo("Cutting the purifying sequences")
+            # Corto las secuencias
+            for i in range(0, len(anAlignment)):
+                seq = anAlignment[i].seq
+                start = removeStart
+                end = len(anAlignment[i].seq) - removeEnd
+                seq = seq[start:end]
+                record = SeqRecord(
+                    Seq(seq),
+                    id = anAlignment[i].id,
+                    name = anAlignment[i].name,
+                    description = anAlignment[i].description,
+                )
+                alignment.append(record)
+
+            printAndLogInfo("The alignment was cut " + str(removeStart) + " positions at the beginning and " + str(removeEnd) + " positions at the end")
+            printAndLogInfo("---------------------------------------")
+            return alignment
+        else:
+            printAndLogCritical("The length of the alignment is shorter than the total positions to be cut by the purifiers")
+            sys.exit()
+    else:
+        return anAlignment
 
 
 def getHomologousSequences(querySeq, sequences, env_variables, args):
@@ -201,21 +221,9 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, querySeq, env_variabl
     condition1 = len(anAlignment) > min_sequences
     condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
     if condition1 or condition2:
-        lenSeq = len(anAlignment[0].seq)
-        # Tomo el valor que voy a cortar del inicio y del final para sacar los purificadores
-        
-        nToRemove = 0 #env_variables[PURIFY_AMINO]
-        # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
-        if lenSeq > (nToRemove*2):
-            start = nToRemove
-            end = len(querySeq.seq)-nToRemove
-        else:
-            start = 0
-            end = len(querySeq.seq)
-        # Corto todas las secuencias del alineamiento por el numero obtenido en el paso anterior
         # Me fijo en que posiciones hay gaps y guardo los indices en una lista
         indices = []
-        for i in range(start, end):
+        for i in range(0,len(querySeq.seq)):
             if querySeq.seq[i] == '-':
                 indices.append(i)
         # Recorro todas las secuencias y me voy quedando con los indices que esten en la lista
@@ -255,7 +263,7 @@ def filterSequenceWithMostGaps(anAlignment, querySeq, env_variables, homologousS
             start = 2
         for ind in range(start,len(anAlignment)):
             if querySeq.id != anAlignment[ind].id:
-                mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq)
+                mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq, env_variables)
         printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=mostGappedSeq.id))
         sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
         printAndLogInfo(str(len(sequences)) + " sequences left.")
@@ -294,14 +302,14 @@ def alignmentHasNMinSequences(sequences, env_variables):
     return len(sequences) >= env_variables[MIN_SEQUENCES]
 
 
-def mostGapped(aSequence, anotherSequence, aQuerySequence):
+def mostGapped(aSequence, anotherSequence, aQuerySequence, env_variables):
     # Obtengo la secuencia con mayor cantidad de gaps
     if gaps(aSequence) > gaps(anotherSequence):
         return aSequence
     elif gaps(aSequence) == gaps(anotherSequence):
         aligner = Align.PairwiseAligner()
-        aligner.match_score = MATCH
-        aligner.mismatch_score = MISMATCH
+        aligner.match_score = env_variables[MATCH]
+        aligner.mismatch_score = env_variables[MISMATCH]
         alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
         alignment2 = aligner.align(anotherSequence.seq.ungap(),aQuerySequence.seq.ungap())
         if alignment1.score < alignment2.score:
@@ -349,12 +357,14 @@ def loadCurrentAlignment():
 
 def generateTree(alignment):
     # Genero el árbol filogenético
+    printAndLogInfo("Generating Phylogenetic Tree")
     tempDir = str(pathlib.Path(__file__).parent.absolute())
     SeqIO.write(alignment, (tempDir + "/finalAlignment.fasta"), "fasta")
     command = ClustalwCommandline(
         CLUSTALW_PATH, infile=(tempDir + "/finalAlignment.fasta"))
     command()
     tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
+    printAndLogInfo("Phylogenetic Tree:")
     printAndLogInfo(Phylo.draw_ascii(tree))
 
 
