@@ -1,7 +1,7 @@
 import os
 import dotenv
 from prettytable import PrettyTable
-from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, PURIFY_AMINO, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PATH, QUERY_SEQUENCE_HEADER, RESET_VALUES
+from project_alignment_optimizer.program.constants import ALL_ENV_VARIABLES, ALL_ENV_VARIABLES_WITH_DESCRIPTION, HOMOLOGOUS_SEQUENCES_PATH, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, DB_HOMOLOGOUS_SEQUENCES, PATH, QUERY_SEQUENCE_HEADER, RESET_VALUES, PATHLIB_ABSOLUTE
 
 dotenv_file = dotenv.find_dotenv('config.env')
 dotenv.load_dotenv(dotenv_file)
@@ -10,6 +10,7 @@ def getVariableIntEnv(key):
     return int(os.environ[key])
 
 def setVariableEnv(key, value):
+    # TODO FI: Validate value of the variable
     dotenv.set_key(dotenv_file, key, str(value))
     
 def getDictVariablesValues():
@@ -42,6 +43,11 @@ def getAllVariablesTable(args):
 
     table.add_row([PATH, args.file])
     table.add_row([QUERY_SEQUENCE_HEADER, args.query_sequence_header])
+
+    if args.homologous_sequences_path is not None:
+        table.add_row([HOMOLOGOUS_SEQUENCES_PATH, PATHLIB_ABSOLUTE + args.homologous_sequences_path])
+    else:
+        table.add_row([HOMOLOGOUS_SEQUENCES_PATH, '-'])
 
     for variable_env_name in dictVariables.keys():
         if dictVariables[variable_env_name]['TYPE']:
@@ -81,5 +87,4 @@ def resetDefaultValues():
     setVariableEnv(FILE_FORMAT, RESET_VALUES[FILE_FORMAT])
     setVariableEnv(MIN_SEQUENCES, RESET_VALUES[MIN_SEQUENCES])
     setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, RESET_VALUES[DB_HOMOLOGOUS_SEQUENCES])
-    setVariableEnv(DB_BLAST, RESET_VALUES[DB_BLAST])
-    setVariableEnv(PURIFY_AMINO, RESET_VALUES[PURIFY_AMINO])
+    #setVariableEnv(PURIFY_AMINO, RESET_VALUES[PURIFY_AMINO])

@@ -13,12 +13,14 @@ def test_search_query_sequence():
 
 def test_filter_aligment_with_more_amount_of_aacc():
    breakpoint()
+   #args = Namespace(file='alignment.fasta', homologous_sequences_path=None, query_sequence_header='6QA2_A')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
+   hom_path = None
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
-   homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables)
+   homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    #busco la que más gaps tiene
    sequence_with_most_gaps = functions.sequenceProvidesMostGaps(currentAlignment, query_sec_header, env_variables)
    #valido que esa despues del primer filtrado no se encuentra 

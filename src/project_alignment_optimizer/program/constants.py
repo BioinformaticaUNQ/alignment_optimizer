@@ -3,7 +3,6 @@ import pathlib
 # Constantes ENV string
 PATH = 'PATH'
 
-#########TODO: Se esta usando esto? ###############
 MATCH = 'MATCH'
 MATCH_DESCRIPTION = "Defines the score given for each character match in the alignment."
 
@@ -12,7 +11,6 @@ MISMATCH_DESCRIPTION = "Defines the score given for each character mismatch in t
 
 GAP_PENALTY = 'GAP_PENALTY'
 GAP_PENALTY_DESCRIPTION = "Defines the penalty assigned for each gap opening in the alignment."
-###################################################
 
 QUERY_SEQUENCE_HEADER = 'QUERY_SEQUENCE_HEADER'
 QUERY_SEQUENCE_HEADER_DESCRIPTION = "Defines the header to be used as query sequence when filtering."
@@ -25,31 +23,44 @@ MIN_SEQUENCES = 'MIN_SEQUENCES'
 MIN_SEQUENCES_DESCRIPTION = "Defines the minimun number of sequences inside the alignment."
 
 DB_HOMOLOGOUS_SEQUENCES = 'DB_HOMOLOGOUS_SEQUENCES'
-DB_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Selects where to look for homologous sequences, where: 0 -> local database, 1 -> BLAST."
-DB_HOMOLOGOUS_SEQUENCES_TYPE = { 0:'db local', 1:'BLAST'}
-DB_HOMOLOGOUS_SEQUENCES_PATH = str(pathlib.Path(__file__).parent.absolute()) + "/dbLocal.fasta"
+DB_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Selects where to look for homologous sequences, where: 0 -> ENTREZ API, 1 -> local database."
+DB_HOMOLOGOUS_SEQUENCES_TYPE = { 0:'ENTREZ API', 1:'local database'}
 
-DB_BLAST = 'DB_BLAST'
-DB_BLAST_DESCRIPTION = "Selects where to look for BLAST homologous sequences, where: 0 -> local BLAST, 1 -> ENTREZ API."
-DB_BLAST_TYPE = { 0:'db local', 1:'API ENTREZ'}
+# TODO FI: Agregar -MATRIX= -GAPOPEN= -GAPEXT= TENER EN CUENTA QUE VAN A SER STRING
 
-PURIFY_AMINO = 'PURIFY_AMINO'
-PURIFY_AMINO_DESCRIPTION = "Defines how many aminoacids should be trimmed from the beginning and end of each sequence."
+HOMOLOGOUS_SEQUENCES_PATH = 'HOMOLOGOUS_SEQUENCES_PATH'
+HOMOLOGOUS_SEQUENCES_PATH_DESCRIPTION = ""
 
-ALL_ENV_VARIABLES = [MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, DB_HOMOLOGOUS_SEQUENCES, DB_BLAST, PURIFY_AMINO]
+N_HOMOLOGOUS_SEQUENCES = "N_HOMOLOGOUS_SEQUENCES"
+N_HOMOLOGOUS_SEQUENCES_DESCRIPTION = ""
+
+ADMIT_HOMOLOGOUS = "ADMIT_HOMOLOGOUS"
+ADMIT_HOMOLOGOUS_DESCRIPTION = ""
+ADMIT_HOMOLOGOUS_TYPE = { 0:'No', 1:'Yes'}
+
+PURIFY_START = 'PURIFY_START'
+PURIFY_START_DESCRIPTION = "Defines how many aminoacids should be trimmed from the beginning of each sequence."
+
+PURIFY_END = 'PURIFY_END'
+PURIFY_END_DESCRIPTION = "Defines how many aminoacids should be trimmed at the end of each sequence."
+
+ALL_ENV_VARIABLES = [ADMIT_HOMOLOGOUS, MATCH, MISMATCH, GAP_PENALTY, FILE_FORMAT, MIN_SEQUENCES, DB_HOMOLOGOUS_SEQUENCES, N_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END]
 ALL_ENV_VARIABLES_WITH_DESCRIPTION = [
+                                        (ADMIT_HOMOLOGOUS, ADMIT_HOMOLOGOUS_DESCRIPTION, ADMIT_HOMOLOGOUS_TYPE),
                                         (MATCH, MATCH_DESCRIPTION, None),
                                         (MISMATCH, MISMATCH_DESCRIPTION, None),
                                         (GAP_PENALTY, GAP_PENALTY_DESCRIPTION, None),
                                         (MIN_SEQUENCES, MIN_SEQUENCES_DESCRIPTION, None),
-                                        (PURIFY_AMINO, PURIFY_AMINO_DESCRIPTION, None),
                                         (DB_HOMOLOGOUS_SEQUENCES, DB_HOMOLOGOUS_SEQUENCES_DESCRIPTION, DB_HOMOLOGOUS_SEQUENCES_TYPE),
-                                        (DB_BLAST, DB_BLAST_DESCRIPTION, DB_BLAST_TYPE),
-                                        (FILE_FORMAT, FILE_FORMAT_DESCRIPTION, FILE_FORMAT_TYPE)
+                                        (FILE_FORMAT, FILE_FORMAT_DESCRIPTION, FILE_FORMAT_TYPE),
+                                        (N_HOMOLOGOUS_SEQUENCES, N_HOMOLOGOUS_SEQUENCES_DESCRIPTION, None),
+                                        (PURIFY_START, PURIFY_START_DESCRIPTION, None),
+                                        (PURIFY_END, PURIFY_END_DESCRIPTION, None)
                                     ]
 
 # Constants PATH Clustal
 CLUSTALW_PATH = str(pathlib.Path(__file__).parent.parent.parent.parent.resolve()) + "/clustalw2"
+PATHLIB_ABSOLUTE = str(pathlib.Path(__file__).parent.absolute())
 
 # Constants query
 QUERY_RUN_ALIGN = 'Are you sure you want to run the alignment with these settings?'
@@ -64,6 +75,8 @@ RESET_VALUES = {
     FILE_FORMAT: 0,
     MIN_SEQUENCES: 50,
     DB_HOMOLOGOUS_SEQUENCES: 0,
-    DB_BLAST: 0,
-    PURIFY_AMINO: 0
+    N_HOMOLOGOUS_SEQUENCES: 20,
+    ADMIT_HOMOLOGOUS: 0,
+    PURIFY_START: 0,
+    PURIFY_END: 0,
 }

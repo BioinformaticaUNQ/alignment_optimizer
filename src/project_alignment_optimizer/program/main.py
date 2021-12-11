@@ -51,13 +51,19 @@ class AlignmentOptimazer(object):
                             required=False,
                             default='alignment.fasta')
 
-        parser.add_argument('-qs', '--query_sequence_header',
+        parser.add_argument('-qsh', '--query_sequence_header',
                             type=str,
                             help='Query sequence header name',
                             required=False,
                             default= '6QA2_A')
-                            
+        
+        parser.add_argument('-hsp', '--homologous_sequences_path',
+                            type=str,
+                            help='Path to the homologous sequences .fasta file (requires ADMIT_HOMOLOGOUS parameter enabled)',
+                            required=False)
+
         args = parser.parse_args(sys.argv[2:])
+        # TODO: validate homologous_sequences_path with ADMIT_HOMOLOGOUS enabled
         _align(args)
 
     def config(self):
