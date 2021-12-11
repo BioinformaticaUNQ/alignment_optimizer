@@ -26,6 +26,7 @@ def getDictVariablesWithAllInfo():
     for name, description, type in ALL_ENV_VARIABLES_WITH_DESCRIPTION:
         tempDict = {}
         tempDict['CURRENT_VALUE'] = int(os.environ[name])
+        tempDict['DEFAULT_VALUE'] = RESET_VALUES[name]
         tempDict['DESCRIPTION'] = description
         tempDict['TYPE'] = type
 
@@ -54,12 +55,12 @@ def getAllVariablesTable(args):
     return table
 
 def getAllVariablesTableWithDescription():
-    table = PrettyTable(['Key', 'Current value', 'Description'])
+    table = PrettyTable(['Key', 'Current value', 'Default Value', 'Description'])
     table.align = 'l' # Align a la izquierda l -> left
     dictVariablesWithDescription = getDictVariablesWithAllInfo()
     for variable_env_name in dictVariablesWithDescription.keys():
         variable_info = dictVariablesWithDescription[variable_env_name]
-        table.add_row([variable_env_name, variable_info['CURRENT_VALUE'], variable_info['DESCRIPTION']])
+        table.add_row([variable_env_name, variable_info['CURRENT_VALUE'],variable_info['DEFAULT_VALUE'] ,variable_info['DESCRIPTION']])
 
     return table
 

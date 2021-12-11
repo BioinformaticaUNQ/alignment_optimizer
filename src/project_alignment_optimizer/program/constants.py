@@ -5,17 +5,17 @@ PATH = 'PATH'
 
 #########TODO: Se esta usando esto? ###############
 MATCH = 'MATCH'
-MATCH_DESCRIPTION = "Puntuacion entre dos caracteres iguales del alineamiento."
+MATCH_DESCRIPTION = "Defines the score given for each character match in the alignment."
 
 MISMATCH = 'MISMATCH'
-MISMATCH_DESCRIPTION = "Puntuacion entre dos caracteres desiguales del alineamiento."
+MISMATCH_DESCRIPTION = "Defines the score given for each character mismatch in the alignment."
 
 GAP_PENALTY = 'GAP_PENALTY'
-GAP_PENALTY_DESCRIPTION = "Penalidad de gap."
+GAP_PENALTY_DESCRIPTION = "Defines the penalty assigned for each gap opening in the alignment."
+###################################################
 
 QUERY_SEQUENCE_HEADER = 'QUERY_SEQUENCE_HEADER'
-QUERY_SEQUENCE_HEADER_DESCRIPTION = "Define la posicion en el array de la Secuencia Query."
-###################################################
+QUERY_SEQUENCE_HEADER_DESCRIPTION = "Defines the header to be used as query sequence when filtering."
 
 FILE_FORMAT  = 'FILE_FORMAT'
 FILE_FORMAT_DESCRIPTION = "Selects the file format of the input file. Currently only supports 0 (FASTA)."
@@ -27,6 +27,7 @@ MIN_SEQUENCES_DESCRIPTION = "Defines the minimun number of sequences inside the 
 DB_HOMOLOGOUS_SEQUENCES = 'DB_HOMOLOGOUS_SEQUENCES'
 DB_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Selects where to look for homologous sequences, where: 0 -> local database, 1 -> BLAST."
 DB_HOMOLOGOUS_SEQUENCES_TYPE = { 0:'db local', 1:'BLAST'}
+DB_HOMOLOGOUS_SEQUENCES_PATH = str(pathlib.Path(__file__).parent.absolute()) + "/dbLocal.fasta"
 
 DB_BLAST = 'DB_BLAST'
 DB_BLAST_DESCRIPTION = "Selects where to look for BLAST homologous sequences, where: 0 -> local BLAST, 1 -> ENTREZ API."

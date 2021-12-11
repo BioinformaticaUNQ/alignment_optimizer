@@ -99,6 +99,7 @@ def _align(args):
 
     # Busco las variables globales
     env_variables = variables_service.getDictVariablesValues()
+    log.info("The program will run with the following parameters: \n" + str(variables_service.getAllVariablesTable(args)))
 
     func.align(args, env_variables)
    
