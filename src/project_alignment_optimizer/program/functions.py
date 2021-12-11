@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH,N_HOMOLOGOUS_SEQUENCES, DB_HOMOLOGOUS_SEQUENCES_PATH,GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, PURIFY_AMINO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -34,15 +34,15 @@ def align(args, env_variables):
     try:
         currentAlignment = loadFile(fileName)
     except:
-         printAndLogInfo("Invalid fiel extension")
-         sys.exit() 
+         printAndLogInfo("Invalid file extension")
+         sys.exit()
     printAndLogInfo("---------------------------------------")
 
     if(alignmentHasNMinSequences(currentAlignment, env_variables)):
         # Obtengo las secuencias homologas
         querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
         printAndLogInfo("Query Sequence: " + querySeq.id)
-        homologousSequences = getHomologousSequences(querySeq, currentAlignment, env_variables)
+        homologousSequences = getHomologousSequences(querySeq, currentAlignment, env_variables, args)
         printAndLogInfo("---------------------------------------")
 
         # Obtengo las secuencias originales
@@ -155,18 +155,22 @@ def checkIsValidPath(filename):
         sys.exit()
 
 
-def getHomologousSequences(querySeq, sequences, env_variables):
+def getHomologousSequences(querySeq, sequences, env_variables, args):
     printAndLogInfo("Getting Homologous Sequences")
     db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
-    if db_hs == 1:
+    if db_hs == 0:
         homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
-    elif db_hs == 0:
-        path = DB_HOMOLOGOUS_SEQUENCES_PATH
+    elif db_hs == 1:
+        path = None
+
+        if args.homologous_sequences_path is not None:
+            path = args.homologous_sequences_path
+
         if path:
             checkIsValidPath(path)
             homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
         else:
-            printAndLogCritical("Invalid db path")
+            printAndLogCritical("Invalid homologous database path")
             sys.exit()
        
     response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
@@ -200,7 +204,7 @@ def filterSequenceThatProvidesMostGapsToQuery(anAlignment, querySeq, env_variabl
         lenSeq = len(anAlignment[0].seq)
         # Tomo el valor que voy a cortar del inicio y del final para sacar los purificadores
         
-        nToRemove = env_variables[PURIFY_AMINO]
+        nToRemove = 0 #env_variables[PURIFY_AMINO]
         # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
         if lenSeq > (nToRemove*2):
             start = nToRemove
@@ -349,9 +353,8 @@ def generateTree(alignment):
     SeqIO.write(alignment, (tempDir + "/finalAlignment.fasta"), "fasta")
     command = ClustalwCommandline(
         CLUSTALW_PATH, infile=(tempDir + "/finalAlignment.fasta"))
-    clusalAlignmentOutput = command()
+    command()
     tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
-    printAndLogInfo(tree)
     printAndLogInfo(Phylo.draw_ascii(tree))
 
 

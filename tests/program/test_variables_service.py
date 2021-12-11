@@ -1,7 +1,7 @@
 import pytest
 import dotenv
 
-from project_alignment_optimizer.program.constants import DB_BLAST, DB_HOMOLOGOUS_SEQUENCES, FILE_FORMAT, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, PURIFY_AMINO, RESET_VALUES
+from project_alignment_optimizer.program.constants import DB_HOMOLOGOUS_SEQUENCES, FILE_FORMAT, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, PURIFY_AMINO, RESET_VALUES
 from project_alignment_optimizer.program import variables_service
 from types import SimpleNamespace
 
@@ -30,7 +30,6 @@ def test_getDictVariablesValues():
     assert variables_service.getVariableIntEnv(FILE_FORMAT) == dictVariablesValues[FILE_FORMAT]
     assert variables_service.getVariableIntEnv(MIN_SEQUENCES) == dictVariablesValues[MIN_SEQUENCES]
     assert variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES) == dictVariablesValues[DB_HOMOLOGOUS_SEQUENCES]
-    assert variables_service.getVariableIntEnv(DB_BLAST) == dictVariablesValues[DB_BLAST]
     assert variables_service.getVariableIntEnv(PURIFY_AMINO) == dictVariablesValues[PURIFY_AMINO]
 
 def test_getDictVariablesWithAllInfo():
@@ -42,7 +41,6 @@ def test_getDictVariablesWithAllInfo():
     assert variables_service.getVariableIntEnv(FILE_FORMAT) == dictVariablesWithAllInfo[FILE_FORMAT]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(MIN_SEQUENCES) == dictVariablesWithAllInfo[MIN_SEQUENCES]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES) == dictVariablesWithAllInfo[DB_HOMOLOGOUS_SEQUENCES]['CURRENT_VALUE']
-    assert variables_service.getVariableIntEnv(DB_BLAST) == dictVariablesWithAllInfo[DB_BLAST]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(PURIFY_AMINO) == dictVariablesWithAllInfo[PURIFY_AMINO]['CURRENT_VALUE']
 
 def test_tables_cant_be_tested():
@@ -79,7 +77,6 @@ def test_resetDefaultValues():
     old_file_format_value = variables_service.getVariableIntEnv(FILE_FORMAT)
     old_min_sequences_value = variables_service.getVariableIntEnv(MIN_SEQUENCES)
     old_db_homologous_sequences_value = variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES)
-    old_db_blast_value = variables_service.getVariableIntEnv(DB_BLAST)
     old_purify_amino_value = variables_service.getVariableIntEnv(PURIFY_AMINO)
 
     variables_service.resetDefaultValues()
@@ -91,7 +88,6 @@ def test_resetDefaultValues():
     assert variables_service.getVariableIntEnv(FILE_FORMAT) == RESET_VALUES[FILE_FORMAT]
     assert variables_service.getVariableIntEnv(MIN_SEQUENCES) == RESET_VALUES[MIN_SEQUENCES]
     assert variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES) == RESET_VALUES[DB_HOMOLOGOUS_SEQUENCES]
-    assert variables_service.getVariableIntEnv(DB_BLAST) == RESET_VALUES[DB_BLAST]
     assert variables_service.getVariableIntEnv(PURIFY_AMINO) == RESET_VALUES[PURIFY_AMINO]
 
     # Set the variables 
@@ -101,5 +97,4 @@ def test_resetDefaultValues():
     variables_service.setVariableEnv(FILE_FORMAT, old_file_format_value)
     variables_service.setVariableEnv(MIN_SEQUENCES, old_min_sequences_value)
     variables_service.setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, old_db_homologous_sequences_value)
-    variables_service.setVariableEnv(DB_BLAST, old_db_blast_value)
     variables_service.setVariableEnv(PURIFY_AMINO, old_purify_amino_value)
