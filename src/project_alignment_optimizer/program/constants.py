@@ -27,6 +27,7 @@ DB_HOMOLOGOUS_SEQUENCES = 'DB_HOMOLOGOUS_SEQUENCES'
 DB_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Selects where to look for homologous sequences, where: 0 -> local database, 1 -> BLAST."
 DB_HOMOLOGOUS_SEQUENCES_TYPE = { 0:'db local', 1:'BLAST'}
 DB_HOMOLOGOUS_SEQUENCES_PATH = str(pathlib.Path(__file__).parent.absolute()) + "/dbLocal.fasta"
+N_HOMOLOGOUS_SEQUENCES = 20
 
 DB_BLAST = 'DB_BLAST'
 DB_BLAST_DESCRIPTION = "Selects where to look for BLAST homologous sequences, where: 0 -> local BLAST, 1 -> ENTREZ API."

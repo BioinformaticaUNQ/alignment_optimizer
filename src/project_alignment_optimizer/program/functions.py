@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, DB_HOMOLOGOUS_SEQUENCES_PATH,GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, PURIFY_AMINO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH,N_HOMOLOGOUS_SEQUENCES, DB_HOMOLOGOUS_SEQUENCES_PATH,GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, PURIFY_AMINO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -158,9 +158,9 @@ def checkIsValidPath(filename):
 def getHomologousSequences(querySeq, sequences, env_variables):
     printAndLogInfo("Getting Homologous Sequences")
     db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
-    if db_hs == 0:
+    if db_hs == 1:
         homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
-    elif db_hs == 1:
+    elif db_hs == 0:
         path = DB_HOMOLOGOUS_SEQUENCES_PATH
         if path:
             checkIsValidPath(path)
@@ -180,7 +180,11 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path):
     try:
         sequences = loadFile(path)
         result = []
-        for seq in sequences:
+        nHomologous = N_HOMOLOGOUS_SEQUENCES
+        if len(sequences) < nHomologous:
+            nHomologous = len(sequences)
+        tmp = sequences[:nHomologous]
+        for seq in tmp:
             result.append((seq,pairwise2.align.globalxx(querySeq.seq, seq.seq,score_only=True)))
         result.sort(key=takeSecond,reverse=True)
         return [i[0] for i in result] 
@@ -363,7 +367,7 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery):
             idString = idString + idProtein + ","
         Entrez.email = "A.N.Other@example.com"
         idString = idString[0:len(idString)-1]
-        handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml")
+        handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax=N_HOMOLOGOUS_SEQUENCES)
         output = Entrez.read(handle)
         result = getSequencesOrderedByMaxScore(seqQuery, output)
     return result
