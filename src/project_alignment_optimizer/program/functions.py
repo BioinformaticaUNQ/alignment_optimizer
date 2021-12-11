@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -11,6 +11,7 @@ import re
 import os
 import sys
 import copy as c
+
 
 # ---------------------
 # Funciones Principales
@@ -24,16 +25,52 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
     printAndLogCritical(f"The header {query_sequence_header} has not been found.")
     sys.exit()
 
-def executeFirstAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences):
 
-    alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, querySeq, env_variables, homologousSequences)
-    currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-    return currentAlignment , currentScore
+def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
+    # Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps
+    alignmentFiltered = filterSequence(0, lastAlignment, querySeq, homologousSequences, env_variables)
+    # Ejecuto el algoritmo
+    return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
 
-def excuteSecondAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences):
-    alignmentFiltered = filterSequenceWithMostGaps(lastAlignment, querySeq, env_variables, homologousSequences)
-    currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
-    return currentAlignment , currentScore
+
+def excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
+    # Saco la secuencia que tenga mas gaps de todo el alineamiento
+    alignmentFiltered = filterSequence(1, lastAlignment, querySeq, homologousSequences, env_variables)
+    # Ejecuto el algoritmo
+    return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
+
+
+def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables):
+    min_sequences = env_variables[MIN_SEQUENCES]
+    if len(alignmentFiltered) < min_sequences:
+        alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(alignmentFiltered, homologousSequences)
+        newAlignment, newScore = generateNewAlignmentAndScore(alignmentWithHomologousSequence)
+        if(newScore > lastScore):
+            return True, newAlignment, newScore
+        else:
+            homologousSequences.insert(0, homologousSequence)
+            return False, lastAlignment, lastScore
+    else:
+        # Calculo el nuevo score y alineamiento
+        newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered)
+        # Compruebo si mejoro el alineamiento 
+        if(newScore > lastScore):
+            return True, newAlignment, newScore
+        else:
+            printAndLogInfo("The alignment score didn't improve 😨")
+            # Como no mejoro, si acepta secuiencias homologas y todavia quedan por agregar, agrego una de ellas
+            admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
+            if (admit_homologous == 1) and (len(homologousSequences) > 0):
+                alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(newAlignment, homologousSequences)
+                newAlignment, newScore = generateNewAlignmentAndScore(alignmentWithHomologousSequence)
+                if(newScore > lastScore):
+                    return True, newAlignment, newScore
+                else:
+                    homologousSequences.insert(0, homologousSequence)
+                    return False, lastAlignment, lastScore
+            else:
+                return False, lastAlignment, lastScore
+
 
 def align(args, env_variables):
 
@@ -54,11 +91,13 @@ def align(args, env_variables):
         # Recorto, cuando corresponda, las secuencias purificadoras
         currentAlignment = trimPurifyingSequences(currentAlignment, env_variables)
 
-        # Obtengo las secuencias homologas
+        # Obtengo las Secuencia Query
         querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
         printAndLogInfo("Query Sequence: " + querySeq.id)
-        homologousSequences = getHomologousSequences(querySeq, currentAlignment, env_variables, args.homologous_sequences_path)
         printAndLogInfo("---------------------------------------")
+
+        # Obtengo las secuencias homologas
+        homologousSequences = getHomologousSequences(querySeq, currentAlignment, env_variables, args.homologous_sequences_path)
 
         # Obtengo las secuencias originales
         seqsAux = c.deepcopy(currentAlignment)
@@ -80,22 +119,20 @@ def align(args, env_variables):
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
             printAndLogInfo("ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
-            currentAlignment , currentScore = executeFirstAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences)
-            printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
-            if(currentScore > lastScore):
+            improve, currentAlignment, currentScore = executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables)
+            if(improve):
                 bestAlignment = currentAlignment
                 bestScore = currentScore
                 lastScore = currentScore
                 lastAlignment = currentAlignment
                 printAndLogInfo("The alignment score improved 😁")
             else:
-                printAndLogInfo("The alignment score didn't improve 😨")
+                printAndLogInfo("The alignment score didn't improve 😖")
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
-                currentAlignment , currentScore = excuteSecondAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences)
-                printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
-                if(currentScore > lastScore):
+                improve, currentAlignment, currentScore = excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, currentScore, env_variables)
+                if(improve):
                     bestAlignment = currentAlignment
                     bestScore = currentScore
                     lastScore = currentScore
@@ -175,29 +212,35 @@ def trimPurifyingSequences(anAlignment, env_variables):
 
 
 def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
-    printAndLogInfo("Getting Homologous Sequences")
-    db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
-    if db_hs == 0:
-        homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
-    elif db_hs == 1:
-        path = None
+    admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
+    if admit_homologous == 1:
+        printAndLogInfo("Getting Homologous Sequences")
+        db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
+        if db_hs == 0:
+            homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
+        elif db_hs == 1:
+            path = None
 
-        if homologous_path is not None:
-            path = homologous_path
+            if homologous_path is not None:
+                path = homologous_path
 
-        if path:
-            checkIsValidPath(path)
-            homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
-        else:
-            printAndLogCritical("Invalid homologous database path")
-            sys.exit()
-       
-    response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
-    for ind in range(1,len(sequences)):
-        response = list(filter(lambda seq: seq.id != sequences[ind].id, response))
+            if path:
+                checkIsValidPath(path)
+                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
+            else:
+                printAndLogCritical("Invalid homologous database path")
+                sys.exit()
+        
+        response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
+        for ind in range(1,len(sequences)):
+            response = list(filter(lambda seq: seq.id != sequences[ind].id, response))
 
-    printAndLogInfo(str(len(response)) + " homologous sequences were obtained correctly")
-    return response
+        printAndLogInfo(str(len(response)) + " homologous sequences were obtained correctly")
+        printAndLogInfo("---------------------------------------")
+        return response
+    else:
+        return []
+
 
 def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path):
     try:
@@ -215,7 +258,40 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path):
       printAndLogInfo("Invalid file extension homologous sequences")
       sys.exit()
 
-def sequenceProvidesMostGaps(anAlignment, querySeq, env_variables):
+
+def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_variables):
+    min_sequences = env_variables[MIN_SEQUENCES]
+    admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
+    condition1 = len(anAlignment) > min_sequences
+    condition2 = len(anAlignment) == min_sequences
+    condition3 = admit_homologous == 1
+    condition4 = len(homologousSequences) > 0
+    if condition1 or (condition2 and condition3 and condition4):
+
+        # Realizo el filtrado correspondiente
+        if filterType == 0:
+            # Sacola secuencia que mas gap genera en la secuencia query
+            seqToRemove = sequenceProvidesMostGaps(anAlignment, querySeq)
+        elif filterType == 1:
+            # Saco la secuencia que tiene mas gaps
+            seqToRemove = sequenceWithMostGaps(anAlignment, querySeq, env_variables)
+
+        printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
+        sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
+        printAndLogInfo(str(len(sequences)) + " sequences left.")
+        printAndLogInfo("Current Alignment: " + str(len(sequences)))
+        return sequences
+    else:
+        if condition2 and (not condition3):
+            # La longitud del alineamiento es igual al minimo de secuencias y no acepta homologas
+            printAndLogInfo("The alignment cannot be filtered because the minimum has already been reached")
+        elif condition2 and condition3 and (not condition4):
+            # La longitud del alineamiento es igual al minimo de secuencias, acepta secuencias homologas, pero no hay mas para agregar
+            printAndLogInfo("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
+        return anAlignment
+
+
+def sequenceProvidesMostGaps(anAlignment, querySeq):
     # Me fijo en que posiciones hay gaps y guardo los indices en una lista
         indices = []
         for i in range(0,len(querySeq.seq)):
@@ -235,23 +311,8 @@ def sequenceProvidesMostGaps(anAlignment, querySeq, env_variables):
                 seqToRemove = anAlignment[x]
         return seqToRemove
 
-def filterSequenceThatProvidesMostGapsToQuery(anAlignment, querySeq, env_variables, homologousSequences):
-    min_sequences = env_variables[MIN_SEQUENCES]
-    condition1 = len(anAlignment) > min_sequences
-    condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
-    if condition1 or condition2:
-        seqToRemove = sequenceProvidesMostGaps(anAlignment,querySeq,env_variables)
-        printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
-        sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
-        printAndLogInfo(str(len(sequences)) + " sequences left.")
-        printAndLogInfo("Current Alignment: " + str(len(sequences)))
-        response = checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences)
-        return response
-    else:
-        printAndLogInfo("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
-        return anAlignment
 
-def sequenceWithMostGaps(anAlignment,querySeq,env_variables):
+def sequenceWithMostGaps(anAlignment, querySeq, env_variables):
         if querySeq.id != anAlignment[0].id:
                 mostGappedSeq = anAlignment[0]
                 start = 1
@@ -263,30 +324,7 @@ def sequenceWithMostGaps(anAlignment,querySeq,env_variables):
                 mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq, env_variables)
         return mostGappedSeq
 
-def filterSequenceWithMostGaps(anAlignment, querySeq, env_variables, homologousSequences):
-    min_sequences = env_variables[MIN_SEQUENCES]
-    condition1 = len(anAlignment) > min_sequences
-    condition2 = (len(anAlignment) <= min_sequences) and (len(homologousSequences) > 0)
-    if condition1 or condition2:
-        # Saco la secuencia que tiene mas gaps
-        mostGappedSeq = sequenceWithMostGaps(anAlignment,querySeq,env_variables)
-        printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=mostGappedSeq.id))
-        sequences = list(filter(lambda seq: seq.id != mostGappedSeq.id, anAlignment))
-        printAndLogInfo(str(len(sequences)) + " sequences left.")
-        printAndLogInfo("Current Alignment: " + str(len(sequences)))
-        response = checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences)
-        return response
-    else:
-        printAndLogInfo("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
-        return anAlignment
 
-
-def checkAndAddHomologousSequenceIfNeeds(sequences, homologousSequences, min_sequences):
-    if len(sequences) < min_sequences:
-        response = addHomologousSequence(sequences, homologousSequences)
-        return response
-    else:
-        return sequences
 def homologousSequenceToAdd(homologousSequences):
     return homologousSequences.pop(0)
 
@@ -299,11 +337,10 @@ def addHomologousSequence(sequences, homologousSequences):
     nSeqAlignment = len(sequences[0].seq)
     nTotal = nSeqAlignment - nNewSeq
     seqFinal = seqToAdd + Seq("-"*nTotal)
-    response = list(filter(lambda seq: True, sequences)) 
-    #response = sequences
-    response.append(seqFinal)
-    printAndLogInfo("Current Alignment: " + str(len(response)))
-    return response
+    responseSequences = list(filter(lambda seq: True, sequences)) 
+    responseSequences.append(seqFinal)
+    printAndLogInfo("Current Alignment: " + str(len(responseSequences)))
+    return responseSequences, seqToAdd
 
 
 def alignmentHasNMinSequences(sequences, env_variables):
@@ -319,7 +356,7 @@ def mostGapped(aSequence, anotherSequence, aQuerySequence, env_variables):
         aligner.match_score = env_variables[MATCH]
         aligner.mismatch_score = env_variables[MISMATCH]
         alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
-        alignment2 = aligner.align(anotherSequence.seq.ungap(),aQuerySequence.seq.ungap())
+        alignment2 = aligner.align(anotherSequence.seq.ungap(), aQuerySequence.seq.ungap())
         if alignment1.score < alignment2.score:
             return aSequence
         else:
@@ -396,7 +433,7 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery):
 
 def getIdsHomologousSequences(idProtein):
     Entrez.email = "A.N.Other@example.com"
-    handle = Entrez.efetch(db="protein", id=idProtein,rettype='ipg', retmode='xml')
+    handle = Entrez.efetch(db="protein", id=idProtein, rettype='ipg', retmode='xml')
     output = Entrez.read(handle)
     proteinList = output['IPGReport']['ProteinList']
     result = []
@@ -406,14 +443,14 @@ def getIdsHomologousSequences(idProtein):
     return result
 
 
-def getSequencesOrderedByMaxScore(seqQuery,output):
+def getSequencesOrderedByMaxScore(seqQuery, output):
     result = []
     if output:
         for protein in output:
             if protein:
                 descriptor = protein["GBSeq_locus"]
-                seqHomologous = SeqRecord(Seq(protein["GBSeq_sequence"].upper()),id =descriptor,name=descriptor,description=descriptor)
-                result.append((seqHomologous,pairwise2.align.globalxx(seqQuery.seq, seqHomologous.seq,score_only=True)))
+                seqHomologous = SeqRecord(Seq(protein["GBSeq_sequence"].upper()), id =descriptor, name=descriptor, description=descriptor)
+                result.append((seqHomologous,pairwise2.align.globalxx(seqQuery.seq, seqHomologous.seq, score_only=True)))
         result.sort(key=takeSecond,reverse=True)
     return [i[0] for i in result] 
 
