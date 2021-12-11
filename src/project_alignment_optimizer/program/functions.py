@@ -1,3 +1,4 @@
+# coding=utf-8
 
 from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
@@ -470,4 +471,3 @@ def printAndLogError(msg):
 def printAndLogWarning(msg):
     print(msg)
     log.warning(msg)
-

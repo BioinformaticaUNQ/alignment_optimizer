@@ -22,8 +22,9 @@ def test_filter_aligment_with_more_amount_of_aacc():
    env_variables = variables_service.getDictVariablesValues()
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    #busco la que más gaps tiene
-   sequence_with_most_gaps = functions.sequenceProvidesMostGaps(currentAlignment, query_sec_header, env_variables)
+   sequence_with_most_gaps = functions.sequenceProvidesMostGaps(currentAlignment, query_seq, env_variables)
    #valido que esa despues del primer filtrado no se encuentra 
+   assert sequence_with_most_gaps.id == '1XQI_A'
    breakpoint()
    aligment_filtered = functions.filterSequenceThatProvidesMostGapsToQuery(currentAlignment, '6QA2_A', env_variables, homologousSequences)
    breakpoint()
