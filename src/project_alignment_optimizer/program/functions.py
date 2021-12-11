@@ -24,13 +24,13 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
     printAndLogCritical(f"The header {query_sequence_header} has not been found.")
     sys.exit()
 
-def executeFirstAligment(lastAlignment,querySeq,env_variables,homologousSequences):
+def executeFirstAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences):
 
     alignmentFiltered = filterSequenceThatProvidesMostGapsToQuery(lastAlignment, querySeq, env_variables, homologousSequences)
     currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
     return currentAlignment , currentScore
 
-def excuteSecondAligment(lastAlignment,querySeq,env_variables,homologousSequences):
+def excuteSecondAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences):
     alignmentFiltered = filterSequenceWithMostGaps(lastAlignment, querySeq, env_variables, homologousSequences)
     currentAlignment , currentScore = generateNewAlignmentAndScore(alignmentFiltered)
     return currentAlignment , currentScore
@@ -80,7 +80,7 @@ def align(args, env_variables):
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
             printAndLogInfo("ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
-            currentAlignment , currentScore = executeFirstAligment(lastAlignment,querySeq,env_variables,homologousSequences)
+            currentAlignment , currentScore = executeFirstAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences)
             printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
             if(currentScore > lastScore):
                 bestAlignment = currentAlignment
@@ -93,7 +93,7 @@ def align(args, env_variables):
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
-                currentAlignment , currentScore = excuteSecondAligment(lastAlignment,querySeq,env_variables,homologousSequences)
+                currentAlignment , currentScore = excuteSecondAlgorithm(lastAlignment,querySeq,env_variables,homologousSequences)
                 printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
                 if(currentScore > lastScore):
                     bestAlignment = currentAlignment
@@ -158,7 +158,6 @@ def trimPurifyingSequences(anAlignment, env_variables):
         lenSeq = len(anAlignment[0].seq)
         # Primero tengo que revisar que el largo de la cadena es mayor a las secuencias que voy a cortar del incio y el final
         if lenSeq > (removeStart + removeEnd):
-            alignment = []
             printAndLogInfo("Cutting the purifying sequences")
             # Corto las secuencias
             for i in range(0, len(anAlignment)):
@@ -166,22 +165,13 @@ def trimPurifyingSequences(anAlignment, env_variables):
                 start = removeStart
                 end = len(anAlignment[i].seq) - removeEnd
                 seq = seq[start:end]
-                record = SeqRecord(
-                    Seq(seq),
-                    id = anAlignment[i].id,
-                    name = anAlignment[i].name,
-                    description = anAlignment[i].description,
-                )
-                alignment.append(record)
-
+                anAlignment[i].seq = Seq(seq)
             printAndLogInfo("The alignment was cut " + str(removeStart) + " positions at the beginning and " + str(removeEnd) + " positions at the end")
             printAndLogInfo("---------------------------------------")
-            return alignment
         else:
-            printAndLogCritical("The length of the alignment is shorter than the total positions to be cut by the purifiers")
+            printAndLogCritical("The length of the alignment is shorter than the total positions to be cut from the purifiers.")
             sys.exit()
-    else:
-        return anAlignment
+    return anAlignment
 
 
 def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
