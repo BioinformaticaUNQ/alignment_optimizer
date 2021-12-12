@@ -24,6 +24,7 @@ def test_getVariableIntEnv_and_setVariableEnv():
 def test_getDictVariablesValues():
     dictVariablesValues = variables_service.getDictVariablesValues()
 
+    # INTEGER
     assert variables_service.getVariableIntEnv(MATCH) == dictVariablesValues[MATCH]
     assert variables_service.getVariableIntEnv(MISMATCH) == dictVariablesValues[MISMATCH]
     assert variables_service.getVariableIntEnv(GAP_PENALTY) == dictVariablesValues[GAP_PENALTY]
@@ -32,10 +33,18 @@ def test_getDictVariablesValues():
     assert variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES) == dictVariablesValues[DB_HOMOLOGOUS_SEQUENCES]
     assert variables_service.getVariableIntEnv(PURIFY_START) == dictVariablesValues[PURIFY_START]
     assert variables_service.getVariableIntEnv(PURIFY_END) == dictVariablesValues[PURIFY_END]
+    assert variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS) == dictVariablesValues[ADMIT_HOMOLOGOUS]
+    assert variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES) == dictVariablesValues[N_HOMOLOGOUS_SEQUENCES]
+    assert variables_service.getVariableIntEnv(GAPOPEN) == dictVariablesValues[GAPOPEN]
+    assert variables_service.getVariableIntEnv(GAPEXT) == dictVariablesValues[GAPEXT]
+
+    # STRING
+    assert variables_service.getVariableStrEnv(MATRIX) == dictVariablesValues[MATRIX]
 
 def test_getDictVariablesWithAllInfo():
     dictVariablesWithAllInfo = variables_service.getDictVariablesWithAllInfo()
 
+    # INTEGER
     assert variables_service.getVariableIntEnv(MATCH) == dictVariablesWithAllInfo[MATCH]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(MISMATCH) == dictVariablesWithAllInfo[MISMATCH]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(GAP_PENALTY) == dictVariablesWithAllInfo[GAP_PENALTY]['CURRENT_VALUE']
@@ -44,6 +53,13 @@ def test_getDictVariablesWithAllInfo():
     assert variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES) == dictVariablesWithAllInfo[DB_HOMOLOGOUS_SEQUENCES]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(PURIFY_START) == dictVariablesWithAllInfo[PURIFY_START]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(PURIFY_END) == dictVariablesWithAllInfo[PURIFY_END]['CURRENT_VALUE']
+    assert variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS) == dictVariablesWithAllInfo[ADMIT_HOMOLOGOUS]['CURRENT_VALUE']
+    assert variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES) == dictVariablesWithAllInfo[N_HOMOLOGOUS_SEQUENCES]['CURRENT_VALUE']
+    assert variables_service.getVariableIntEnv(GAPOPEN) == dictVariablesWithAllInfo[GAPOPEN]['CURRENT_VALUE']
+    assert variables_service.getVariableIntEnv(GAPEXT) == dictVariablesWithAllInfo[GAPEXT]['CURRENT_VALUE']
+
+    # STRING
+    assert variables_service.getVariableStrEnv(MATRIX) == dictVariablesWithAllInfo[MATRIX]['CURRENT_VALUE']
 
 def test_tables_cant_be_tested():
     variables_service.getAllVariablesTable(SimpleNamespace(**{'file':None, 'query_sequence_header':None, 'homologous_sequences_path':None}))
@@ -93,6 +109,7 @@ def test_config_set_key_new_value_else_else():
 def test_resetDefaultValues():
     dotenv_file = dotenv.find_dotenv('config.env')
 
+    # INTEGER
     old_match_value = variables_service.getVariableIntEnv(MATCH)
     old_mismatch_value = variables_service.getVariableIntEnv(MISMATCH)
     old_gap_penalty_value = variables_service.getVariableIntEnv(GAP_PENALTY)
@@ -101,10 +118,18 @@ def test_resetDefaultValues():
     old_db_homologous_sequences_value = variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES)
     old_purify_start_value = variables_service.getVariableIntEnv(PURIFY_START)
     old_purify_end_value = variables_service.getVariableIntEnv(PURIFY_END)
+    old_admit_homologous_value = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+    old_n_homologous_sequences_value = variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES)
+    old_gapopen_value = variables_service.getVariableIntEnv(GAPOPEN)
+    old_gapext_value = variables_service.getVariableIntEnv(GAPEXT)
+
+    # STRING
+    old_matrix_value = variables_service.getVariableStrEnv(MATRIX)
 
     variables_service.resetDefaultValues()
     dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
 
+    # INTEGER
     assert variables_service.getVariableIntEnv(MATCH) == RESET_VALUES[MATCH]
     assert variables_service.getVariableIntEnv(MISMATCH) == RESET_VALUES[MISMATCH]
     assert variables_service.getVariableIntEnv(GAP_PENALTY) == RESET_VALUES[GAP_PENALTY]
@@ -113,6 +138,13 @@ def test_resetDefaultValues():
     assert variables_service.getVariableIntEnv(DB_HOMOLOGOUS_SEQUENCES) == RESET_VALUES[DB_HOMOLOGOUS_SEQUENCES]
     assert variables_service.getVariableIntEnv(PURIFY_START) == RESET_VALUES[PURIFY_START]
     assert variables_service.getVariableIntEnv(PURIFY_END) == RESET_VALUES[PURIFY_END]
+    assert variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS) == RESET_VALUES[ADMIT_HOMOLOGOUS]
+    assert variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES) == RESET_VALUES[N_HOMOLOGOUS_SEQUENCES]
+    assert variables_service.getVariableIntEnv(GAPOPEN) == RESET_VALUES[GAPOPEN]
+    assert variables_service.getVariableIntEnv(GAPEXT) == RESET_VALUES[GAPEXT]
+
+    # STRING
+    assert variables_service.getVariableStrEnv(MATRIX) == RESET_VALUES[MATRIX]
 
     # Set the variables 
     variables_service.setVariableEnv(MATCH, old_match_value)
@@ -123,6 +155,11 @@ def test_resetDefaultValues():
     variables_service.setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, old_db_homologous_sequences_value)
     variables_service.setVariableEnv(PURIFY_START, old_purify_start_value)
     variables_service.setVariableEnv(PURIFY_END, old_purify_end_value)
+    variables_service.setVariableEnv(ADMIT_HOMOLOGOUS, old_admit_homologous_value)
+    variables_service.setVariableEnv(N_HOMOLOGOUS_SEQUENCES, old_n_homologous_sequences_value)
+    variables_service.setVariableEnv(GAPOPEN, old_gapopen_value)
+    variables_service.setVariableEnv(GAPEXT, old_gapext_value)
+    variables_service.setVariableEnv(MATRIX, old_matrix_value)
 
 def test_validateKey_MATCH_true():
     value = '1'
