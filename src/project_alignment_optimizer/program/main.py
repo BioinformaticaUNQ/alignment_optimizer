@@ -61,7 +61,7 @@ class AlignmentOptimazer(object):
                             required=False)
 
         args = parser.parse_args(sys.argv[2:])
-        # TODO: validate homologous_sequences_path with ADMIT_HOMOLOGOUS enabled
+
         _align(args)
 
     def config(self):
@@ -78,7 +78,6 @@ class AlignmentOptimazer(object):
                             required=False)
 
         parser.add_argument('-v', '--value',
-                            type=int,
                             help='Value for the key.',
                             required=False)
 
@@ -94,6 +93,11 @@ class AlignmentOptimazer(object):
 # ---------------------
 
 def _align(args):
+    # Valido que si se le pasa un path de --homologous_sequences_path debe de tener ENABLE el parametro ADMIT_HOMOLOGOUS
+    if not variables_service.isValidHomologousSequencesPath(args):
+        print("If the argument '--homologous_sequences_path' is passed, the 'ADMIT_HOMOLOGOUS' parameter must be enabled.")
+        return
+
     # Muestro la tabla de configuracion
     print(variables_service.getAllVariablesTable(args))
     
@@ -113,7 +117,8 @@ def _config(args):
         variables_service.resetDefaultValues()
         print('File config.env restored to default values.')
     if args.key and args.value:
-        was_configured = variables_service.config_set_key_new_value(args)
+        was_configured, message = variables_service.config_set_key_new_value(args)
+        print(message)
         if not was_configured:
             exit(1)
 
