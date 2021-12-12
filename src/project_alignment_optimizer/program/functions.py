@@ -29,6 +29,7 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
 
 def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps
+    # El tipo de filtrado es el 0
     alignmentFiltered = filterSequence(0, lastAlignment, querySeq, homologousSequences, env_variables)
     # Ejecuto el algoritmo
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
@@ -36,6 +37,7 @@ def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScor
 
 def excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas gaps de todo el alineamiento
+    # El tipo de filtrado es el 1
     alignmentFiltered = filterSequence(1, lastAlignment, querySeq, homologousSequences, env_variables)
     # Ejecuto el algoritmo
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
@@ -53,8 +55,10 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
             return False, lastAlignment, lastScore
     else:
         # Calculo el nuevo score y alineamiento
+        copyAl = c.deepcopy(lastAlignment)
         newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered)
         # Compruebo si mejoro el alineamiento 
+        
         if(newScore > lastScore):
             return True, newAlignment, newScore
         else:
@@ -68,9 +72,9 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
                     return True, newAlignment, newScore
                 else:
                     homologousSequences.insert(0, homologousSequence)
-                    return False, lastAlignment, lastScore
+                    return False, copyAl, lastScore
             else:
-                return False, lastAlignment, lastScore
+                return False, copyAl, lastScore
 
 
 def align(args, env_variables):
@@ -116,23 +120,30 @@ def align(args, env_variables):
         printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
         while(better):
             lastAlignment = currentAlignment
+            copyLastAlignment = c.deepcopy(lastAlignment)
             lastScore = currentScore
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
             printAndLogInfo("ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
+            
             improve, currentAlignment, currentScore = executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables)
+            querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
             if(improve):
                 bestAlignment = currentAlignment
                 bestScore = currentScore
                 lastScore = currentScore
-                lastAlignment = currentAlignment
+                lastAlignment = copyLastAlignment
                 printAndLogInfo("The alignment score improved 😁")
             else:
+                currentAlignment = copyLastAlignment
                 printAndLogInfo("The alignment score didn't improve 😖")
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
-                improve, currentAlignment, currentScore = excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, currentScore, env_variables)
+                #aca se caga, currentAligmnet no es un alineamiento sino secuencias sin gaps. 
+                improve, currentAlignment, currentScore = excuteSecondAlgorithm(copyLastAlignment, querySeq, homologousSequences, currentScore, env_variables)
+                querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
+
                 if(improve):
                     bestAlignment = currentAlignment
                     bestScore = currentScore
@@ -213,12 +224,12 @@ def trimPurifyingSequences(anAlignment, env_variables):
 
 
 def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
-    admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
+    admit_homologous = env_variables[ADMIT_HOMOLOGOUS] 
     if admit_homologous == 1:
         printAndLogInfo("Getting Homologous Sequences")
         db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
         if db_hs == 0:
-            homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
+            homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq, env_variables)
         elif db_hs == 1:
             path = None
 
@@ -227,7 +238,7 @@ def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
 
             if path:
                 checkIsValidPath(path)
-                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
+                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables)
             else:
                 printAndLogCritical("Invalid homologous database path")
                 sys.exit()
@@ -243,11 +254,11 @@ def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
         return []
 
 
-def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path):
+def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables):
     try:
         sequences = loadFile(path)
         result = []
-        nHomologous = N_HOMOLOGOUS_SEQUENCES
+        nHomologous = env_variables[N_HOMOLOGOUS_SEQUENCES]
         if len(sequences) < nHomologous:
             nHomologous = len(sequences)
         tmp = sequences[:nHomologous]
@@ -273,7 +284,7 @@ def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_v
         if filterType == 0:
             # Sacola secuencia que mas gap genera en la secuencia query
             seqToRemove = sequenceProvidesMostGaps(anAlignment, querySeq)
-        elif filterType == 1:
+        else:
             # Saco la secuencia que tiene mas gaps
             seqToRemove = sequenceWithMostGaps(anAlignment, querySeq, env_variables)
 
@@ -414,7 +425,7 @@ def generateTree(alignment):
     printAndLogInfo(Phylo.draw_ascii(tree))
 
 
-def getHomologousSequencesOrderedByMaxScore(seqQuery):
+def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
     #Se pasa como parametro un SeqRecord
     #y devuelve una lista de SeqRecord 
     #ordenada de mayor a menor por score con la seqQuery
@@ -426,22 +437,31 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery):
             idString = idString + idProtein + ","
         Entrez.email = "A.N.Other@example.com"
         idString = idString[0:len(idString)-1]
-        handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax=N_HOMOLOGOUS_SEQUENCES)
-        output = Entrez.read(handle)
-        result = getSequencesOrderedByMaxScore(seqQuery, output)
-    return result
+        try:
+            handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax= env_variables[N_HOMOLOGOUS_SEQUENCES])
+            output = Entrez.read(handle)
+            result = getSequencesOrderedByMaxScore(seqQuery, output)
+            return result
+        except:
+            printAndLogCritical('Internet connection error 💻🌐❌')
+            sys.exit()
 
 
 def getIdsHomologousSequences(idProtein):
     Entrez.email = "A.N.Other@example.com"
-    handle = Entrez.efetch(db="protein", id=idProtein, rettype='ipg', retmode='xml')
-    output = Entrez.read(handle)
-    proteinList = output['IPGReport']['ProteinList']
-    result = []
-    if proteinList:
-        for indx in range(0,len(proteinList)):
-            result.append(proteinList[indx].attributes['accver'])
-    return result
+    try:
+        handle = Entrez.efetch(db="protein", id=idProtein, rettype='ipg', retmode='xml')
+        output = Entrez.read(handle)
+        proteinList = output['IPGReport']['ProteinList']
+        result = []
+        if proteinList:
+            for indx in range(0,len(proteinList)):
+                result.append(proteinList[indx].attributes['accver'])
+        return result
+    except:
+        printAndLogCritical('Internet connection error 💻🌐❌')
+        sys.exit()
+   
 
 
 def getSequencesOrderedByMaxScore(seqQuery, output):

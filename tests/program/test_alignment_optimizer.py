@@ -26,7 +26,8 @@ def test_filter_aligment_with_more_amount_of_aacc():
    #valido que esa despues del primer filtrado no se encuentra 
    assert sequence_with_most_gaps.id == '1XQI_A'
    breakpoint()
-   aligment_filtered = functions.filterSequenceThatProvidesMostGapsToQuery(currentAlignment, '6QA2_A', env_variables, homologousSequences)
+   
+   aligment_filtered = functions.filterSequence(1,currentAlignment, '6QA2_A', env_variables, homologousSequences)
    breakpoint()
    filtered = list(filter(lambda al: al.seq == sequence_with_most_gaps.seq,aligment_filtered))
    notFiltered = list(filter(lambda al: al.seq == sequence_with_most_gaps.seq,currentAlignment))
