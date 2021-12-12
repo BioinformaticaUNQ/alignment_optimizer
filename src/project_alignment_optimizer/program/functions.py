@@ -436,22 +436,31 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
             idString = idString + idProtein + ","
         Entrez.email = "A.N.Other@example.com"
         idString = idString[0:len(idString)-1]
-        handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax= env_variables[N_HOMOLOGOUS_SEQUENCES])
-        output = Entrez.read(handle)
-        result = getSequencesOrderedByMaxScore(seqQuery, output)
-    return result
+        try:
+            handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax= env_variables[N_HOMOLOGOUS_SEQUENCES])
+            output = Entrez.read(handle)
+            result = getSequencesOrderedByMaxScore(seqQuery, output)
+            return result
+        except:
+            printAndLogCritical('Internet connection error 💻🌐❌')
+            sys.exit()
 
 
 def getIdsHomologousSequences(idProtein):
     Entrez.email = "A.N.Other@example.com"
-    handle = Entrez.efetch(db="protein", id=idProtein, rettype='ipg', retmode='xml')
-    output = Entrez.read(handle)
-    proteinList = output['IPGReport']['ProteinList']
-    result = []
-    if proteinList:
-        for indx in range(0,len(proteinList)):
-            result.append(proteinList[indx].attributes['accver'])
-    return result
+    try:
+        handle = Entrez.efetch(db="protein", id=idProtein, rettype='ipg', retmode='xml')
+        output = Entrez.read(handle)
+        proteinList = output['IPGReport']['ProteinList']
+        result = []
+        if proteinList:
+            for indx in range(0,len(proteinList)):
+                result.append(proteinList[indx].attributes['accver'])
+        return result
+    except:
+        printAndLogCritical('Internet connection error 💻🌐❌')
+        sys.exit()
+   
 
 
 def getSequencesOrderedByMaxScore(seqQuery, output):
