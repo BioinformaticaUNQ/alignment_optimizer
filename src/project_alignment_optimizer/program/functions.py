@@ -223,12 +223,12 @@ def trimPurifyingSequences(anAlignment, env_variables):
 
 
 def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
-    admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
+    admit_homologous = env_variables[ADMIT_HOMOLOGOUS] 
     if admit_homologous == 1:
         printAndLogInfo("Getting Homologous Sequences")
         db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
         if db_hs == 0:
-            homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq)
+            homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq, env_variables)
         elif db_hs == 1:
             path = None
 
@@ -237,7 +237,7 @@ def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
 
             if path:
                 checkIsValidPath(path)
-                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path)
+                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables)
             else:
                 printAndLogCritical("Invalid homologous database path")
                 sys.exit()
@@ -253,11 +253,11 @@ def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
         return []
 
 
-def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path):
+def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables):
     try:
         sequences = loadFile(path)
         result = []
-        nHomologous = N_HOMOLOGOUS_SEQUENCES
+        nHomologous = env_variables[N_HOMOLOGOUS_SEQUENCES]
         if len(sequences) < nHomologous:
             nHomologous = len(sequences)
         tmp = sequences[:nHomologous]
@@ -424,7 +424,7 @@ def generateTree(alignment):
     printAndLogInfo(Phylo.draw_ascii(tree))
 
 
-def getHomologousSequencesOrderedByMaxScore(seqQuery):
+def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
     #Se pasa como parametro un SeqRecord
     #y devuelve una lista de SeqRecord 
     #ordenada de mayor a menor por score con la seqQuery
@@ -436,7 +436,7 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery):
             idString = idString + idProtein + ","
         Entrez.email = "A.N.Other@example.com"
         idString = idString[0:len(idString)-1]
-        handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax=N_HOMOLOGOUS_SEQUENCES)
+        handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax= env_variables[N_HOMOLOGOUS_SEQUENCES])
         output = Entrez.read(handle)
         result = getSequencesOrderedByMaxScore(seqQuery, output)
     return result
