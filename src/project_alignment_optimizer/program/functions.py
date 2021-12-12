@@ -28,6 +28,7 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
 
 def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps
+    # El tipo de filtrado es el 0
     alignmentFiltered = filterSequence(0, lastAlignment, querySeq, homologousSequences, env_variables)
     # Ejecuto el algoritmo
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
@@ -35,6 +36,7 @@ def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScor
 
 def excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas gaps de todo el alineamiento
+    # El tipo de filtrado es el 1
     alignmentFiltered = filterSequence(1, lastAlignment, querySeq, homologousSequences, env_variables)
     # Ejecuto el algoritmo
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
@@ -52,8 +54,10 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
             return False, lastAlignment, lastScore
     else:
         # Calculo el nuevo score y alineamiento
+        copyAl = c.deepcopy(lastAlignment)
         newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered)
         # Compruebo si mejoro el alineamiento 
+        
         if(newScore > lastScore):
             return True, newAlignment, newScore
         else:
@@ -67,9 +71,9 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
                     return True, newAlignment, newScore
                 else:
                     homologousSequences.insert(0, homologousSequence)
-                    return False, lastAlignment, lastScore
+                    return False, copyAl, lastScore
             else:
-                return False, lastAlignment, lastScore
+                return False, copyAl, lastScore
 
 
 def align(args, env_variables):
@@ -115,23 +119,30 @@ def align(args, env_variables):
         printAndLogInfo("Current Alignment: " + str(len(currentAlignment)))
         while(better):
             lastAlignment = currentAlignment
+            copyLastAlignment = c.deepcopy(lastAlignment)
             lastScore = currentScore
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
             printAndLogInfo("ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
+            
             improve, currentAlignment, currentScore = executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables)
+            querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
             if(improve):
                 bestAlignment = currentAlignment
                 bestScore = currentScore
                 lastScore = currentScore
-                lastAlignment = currentAlignment
+                lastAlignment = copyLastAlignment
                 printAndLogInfo("The alignment score improved 😁")
             else:
+                currentAlignment = copyLastAlignment
                 printAndLogInfo("The alignment score didn't improve 😖")
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
-                improve, currentAlignment, currentScore = excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, currentScore, env_variables)
+                #aca se caga, currentAligmnet no es un alineamiento sino secuencias sin gaps. 
+                improve, currentAlignment, currentScore = excuteSecondAlgorithm(copyLastAlignment, querySeq, homologousSequences, currentScore, env_variables)
+                querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
+
                 if(improve):
                     bestAlignment = currentAlignment
                     bestScore = currentScore
@@ -272,7 +283,7 @@ def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_v
         if filterType == 0:
             # Sacola secuencia que mas gap genera en la secuencia query
             seqToRemove = sequenceProvidesMostGaps(anAlignment, querySeq)
-        elif filterType == 1:
+        else:
             # Saco la secuencia que tiene mas gaps
             seqToRemove = sequenceWithMostGaps(anAlignment, querySeq, env_variables)
 
