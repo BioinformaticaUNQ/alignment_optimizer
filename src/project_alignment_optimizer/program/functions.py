@@ -393,7 +393,12 @@ def getUngappedSequences(anAlignment):
 
 
 def parseScore(aClustalOutputString):
-    return re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
+    # TODO: Ver si los valores negativos rompen la lógica de filtrado.
+    score = re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
+    if score:
+        return int(score)
+    else:
+        return 0
 
 
 def generateAlignmentAndCalculateScore(originalSequences):
@@ -404,7 +409,7 @@ def generateAlignmentAndCalculateScore(originalSequences):
         CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"))
     clusalAlignmentOutput = command()
     score = parseScore(clusalAlignmentOutput[0])
-    printAndLogInfo("New alignment Score: " + score)
+    printAndLogInfo(f"New alignment Score: {score}")
     return score
 
 
