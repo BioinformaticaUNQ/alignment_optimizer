@@ -85,8 +85,8 @@ def align(args, env_variables):
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     try:
         currentAlignment = loadFile(fileName)
-    except:
-         printAndLogInfo("Invalid file extension")
+    except BaseException as err:
+         printAndLogInfo("ERROR: "+str(err))
          sys.exit()
     printAndLogInfo("---------------------------------------")
 
@@ -182,15 +182,18 @@ def loadFile(filename):
     # Obtengo el archivo con el alineamiento inicial
     checkIsValidPath(filename)
     printAndLogInfo("Getting Alignments")
-    with open(filename, "r") as handle:
-
-        originalAlignment = AlignIO.read(handle, "fasta")
-        if (any(originalAlignment)):
-            printAndLogInfo(str(len(originalAlignment)) + " aligned sequences were obtained correctly")
-            return originalAlignment
-        else:
-            printAndLogCritical("Invalid file format")
-            sys.exit()
+    if filename.lower().endswith(('.fasta')):
+        with open(filename, "r") as handle:
+            originalAlignment = AlignIO.read(handle, "fasta")
+            if (any(originalAlignment)):
+                printAndLogInfo(str(len(originalAlignment)) + " aligned sequences were obtained correctly")
+                return originalAlignment
+            else:
+                printAndLogCritical("Invalid file format")
+                sys.exit()
+    else:
+      printAndLogCritical("Invalid extension file")
+      sys.exit()
 
 
 def checkIsValidPath(filename):
@@ -265,8 +268,8 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables):
             result.append((seq,pairwise2.align.globalxx(querySeq.seq, seq.seq,score_only=True)))
         result.sort(key=takeSecond,reverse=True)
         return [i[0] for i in result] 
-    except:
-      printAndLogInfo("Invalid file extension homologous sequences")
+    except  BaseException as err:
+      printAndLogInfo("ERROR: "+ str(err))
       sys.exit()
 
 
@@ -441,7 +444,8 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
             output = Entrez.read(handle)
             result = getSequencesOrderedByMaxScore(seqQuery, output)
             return result
-        except:
+        except BaseException as err:
+            printAndLogCritical("ERROR: "+str(err))
             printAndLogCritical('Internet connection error 💻🌐❌')
             sys.exit()
 
@@ -457,7 +461,8 @@ def getIdsHomologousSequences(idProtein):
             for indx in range(0,len(proteinList)):
                 result.append(proteinList[indx].attributes['accver'])
         return result
-    except:
+    except BaseException as err:
+        printAndLogCritical("ERROR: "+str(err))
         printAndLogCritical('Internet connection error 💻🌐❌')
         sys.exit()
    
