@@ -192,8 +192,7 @@ def loadFile(filename):
                 printAndLogCritical("Invalid file format")
                 sys.exit()
     else:
-      printAndLogCritical("Invalid extension file")
-      sys.exit()
+      raise Exception("Invalid extension file")
 
 
 def checkIsValidPath(filename):
@@ -268,7 +267,7 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables):
             result.append((seq,pairwise2.align.globalxx(querySeq.seq, seq.seq,score_only=True)))
         result.sort(key=takeSecond,reverse=True)
         return [i[0] for i in result] 
-    except  BaseException as err:
+    except BaseException as err:
       printAndLogInfo("ERROR: "+ str(err))
       sys.exit()
 
@@ -462,7 +461,7 @@ def getIdsHomologousSequences(idProtein):
                 result.append(proteinList[indx].attributes['accver'])
         return result
     except BaseException as err:
-        printAndLogCritical("ERROR: "+str(err))
+        printAndLogCritical("ERROR: "+str(err)) 
         printAndLogCritical('Internet connection error 💻🌐❌')
         sys.exit()
    
