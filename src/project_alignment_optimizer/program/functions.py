@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAPEXT, GAPOPEN, HOMOLOGOUS_SEQUENCES_PATH, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -51,7 +51,7 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
         alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(
             alignmentFiltered, homologousSequences)
         newAlignment, newScore = generateNewAlignmentAndScore(
-            alignmentWithHomologousSequence)
+            alignmentWithHomologousSequence, env_variables)
         if(newScore > lastScore):
             return True, newAlignment, newScore
         else:
@@ -60,7 +60,7 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
     else:
         # Calculo el nuevo score y alineamiento
         copyAl = c.deepcopy(lastAlignment)
-        newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered)
+        newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered, env_variables)
         # Compruebo si mejoro el alineamiento
 
         if(newScore > lastScore):
@@ -73,7 +73,7 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
                 alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(
                     newAlignment, homologousSequences)
                 newAlignment, newScore = generateNewAlignmentAndScore(
-                    alignmentWithHomologousSequence)
+                    alignmentWithHomologousSequence, env_variables)
                 if(newScore > lastScore):
                     return True, newAlignment, newScore
                 else:
@@ -119,7 +119,7 @@ def align(args, env_variables):
 
         # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
         # Este alineamiento lo descarto, ya que no me sirve
-        currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
+        currentScore = generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
 
         # Genero nuevos alineamientos y sus scores correspondientes
         # Mientras aumente el score actual sigo aplicando los filtros
@@ -428,12 +428,17 @@ def parseScore(aClustalOutputString):
     else:
         return 0
 
+<<<<<<< HEAD
 def generateAlignmentAndCalculateScore(originalSequences):
+=======
+
+def generateAlignmentAndCalculateScore(originalSequences, env_variables):
+>>>>>>> 8c7eec73acc42512b269e62ebb9a3f106806ab66
     # Genero el nuevo alineamiento por medio de CLUSTAL
     tempDir = str(pathlib.Path(__file__).parent.resolve())
     SeqIO.write(originalSequences, (tempDir + "/seqs.fasta"), "fasta")
     command = ClustalwCommandline(
-        CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"))
+        CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"), gapopen=env_variables[GAPOPEN], gapext=env_variables[GAPEXT], matrix=env_variables[MATRIX])
     clusalAlignmentOutput = command()
     score = parseScore(clusalAlignmentOutput[0])
     printAndLogInfo(f"New alignment Score: {score}")
@@ -518,9 +523,9 @@ def takeSecond(elem):
     return elem[1]
 
 
-def generateNewAlignmentAndScore(alignmentFiltered):
+def generateNewAlignmentAndScore(alignmentFiltered, env_variables):
     ungappedSequences = getUngappedSequences(alignmentFiltered)
-    currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
+    currentScore = generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
     currentAlignment = loadCurrentAlignment()
     return currentAlignment, currentScore
 
