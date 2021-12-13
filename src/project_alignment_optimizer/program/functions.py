@@ -192,7 +192,7 @@ def loadFile(filename):
                 printAndLogCritical("Invalid file format")
                 sys.exit()
     else:
-      raise Exception("Invalid extension file")
+      raise Exception("Date provided can't be in the past")
 
 
 def checkIsValidPath(filename):
@@ -393,13 +393,12 @@ def getUngappedSequences(anAlignment):
 
 
 def parseScore(aClustalOutputString):
-    # TODO: Ver si los valores negativos rompen la lógica de filtrado.
+     # TODO: Ver si los valores negativos rompen la lógica de filtrado.
     score = re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
     if score:
         return int(score)
     else:
         return 0
-
 
 def generateAlignmentAndCalculateScore(originalSequences):
     # Genero el nuevo alineamiento por medio de CLUSTAL
