@@ -428,12 +428,8 @@ def parseScore(aClustalOutputString):
     else:
         return 0
 
-<<<<<<< HEAD
-def generateAlignmentAndCalculateScore(originalSequences):
-=======
 
 def generateAlignmentAndCalculateScore(originalSequences, env_variables):
->>>>>>> 8c7eec73acc42512b269e62ebb9a3f106806ab66
     # Genero el nuevo alineamiento por medio de CLUSTAL
     tempDir = str(pathlib.Path(__file__).parent.resolve())
     SeqIO.write(originalSequences, (tempDir + "/seqs.fasta"), "fasta")
