@@ -1,7 +1,7 @@
 import pytest
 from project_alignment_optimizer.program import variables_service
 from project_alignment_optimizer.program import functions
-from project_alignment_optimizer.program.constants import MIN_SEQUENCES
+from project_alignment_optimizer.program.constants import MIN_SEQUENCES,PURIFY_START,PURIFY_END
 
 def test_search_query_sequence():
     file = functions.loadFile('alignment.fasta')
@@ -85,6 +85,55 @@ def test_filter_sequence_most_gapped_inject_homologous():
    assert len(alignmentWithHomologousSequence) == 93
    assert len(seqs_homologous_after_load)==1
 
+def test_trim_start_sequences():
+   currentAlignment = functions.loadFile('alignment.fasta')
+   query_sec_header = '6QA2_A'
+   hom_path = None
+   #busco cual es la secuencia con mayor candidad de gaps
+   query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
+
+   env_variables = variables_service.getDictVariablesValues()
+   variables_service.setVariableEnv(PURIFY_START,20)
+
+   sequence_no_trimmed = currentAlignment[0].seq
+   assert len(sequence_no_trimmed) == 246
+   breakpoint()
+   aligment_trim = functions.trimPurifyingSequences(currentAlignment, env_variables)
+   sequence_trimmed = aligment_trim[0].seq
+   assert len(sequence_trimmed) == 226
+
+def test_trim_start_and_end_sequences():
+   currentAlignment = functions.loadFile('alignment.fasta')
+   query_sec_header = '6QA2_A'
+   hom_path = None
+   #busco cual es la secuencia con mayor candidad de gaps
+   query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
+
+   env_variables = variables_service.getDictVariablesValues()
+   variables_service.setVariableEnv(PURIFY_START,20)
+   variables_service.setVariableEnv(PURIFY_END,20)
+   sequence_no_trimmed = currentAlignment[0].seq
+   assert len(sequence_no_trimmed) == 246
+   breakpoint()
+   aligment_trim = functions.trimPurifyingSequences(currentAlignment, env_variables)
+   sequence_trimmed = aligment_trim[0].seq
+   assert len(sequence_trimmed) == 206
+
+
+def test_default_trim_value_is_zero():
+   currentAlignment = functions.loadFile('alignment.fasta')
+   query_sec_header = '6QA2_A'
+   hom_path = None
+   #busco cual es la secuencia con mayor candidad de gaps
+   query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
+
+   env_variables = variables_service.getDictVariablesValues()
+   sequence_no_trimmed = currentAlignment[0].seq
+   assert len(sequence_no_trimmed) == 246
+
+   aligment_trim = functions.trimPurifyingSequences(currentAlignment, env_variables)
+   sequence_trimmed = aligment_trim[0].seq
+   assert len(sequence_no_trimmed) == 246
 
 
 def homologousInCollection(sequenceCollection,homologousSeqCollection):
