@@ -94,8 +94,11 @@ def align(args, env_variables):
     try:
         currentAlignment = loadFile(fileName)
     except BaseException as err:
-        printAndLogInfo("ERROR: "+str(err))
-        sys.exit()
+         if not isinstance(err,KeyboardInterrupt) :
+                printAndLogCritical("ERROR: "+str(err))
+         else:
+                printAndLogCritical("Keyboard interrupt")   
+         sys.exit()
     printAndLogInfo("---------------------------------------")
 
     outputDir = createOutputDir(fileName, query_sequence_header)
@@ -206,16 +209,14 @@ def loadFile(filename):
                                 " aligned sequences were obtained correctly")
                 return originalAlignment
             else:
-                printAndLogCritical("Invalid file format")
-                sys.exit()
+                 raise Exception("Invalid file format")       
     else:
         raise Exception("Invalid extension file")
 
 
 def checkIsValidPath(filename):
     if not os.path.isfile(filename):
-        printAndLogCritical("Invalid file path")
-        sys.exit()
+        raise Exception("Invalid file path")
 
 
 def trimPurifyingSequences(anAlignment, env_variables):
@@ -292,8 +293,11 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq, path, env_variables)
         result.sort(key=takeSecond, reverse=True)
         return [i[0] for i in result]
     except BaseException as err:
-        printAndLogInfo("ERROR: " + str(err))
-        sys.exit()
+         if not isinstance(err,KeyboardInterrupt) :
+                printAndLogCritical("ERROR: "+str(err))
+         else:
+                printAndLogCritical("Keyboard interrupt")  
+         sys.exit()
 
 
 def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_variables):
@@ -422,12 +426,8 @@ def getUngappedSequences(anAlignment):
 
 
 def parseScore(aClustalOutputString):
-     # TODO: Ver si los valores negativos rompen la lógica de filtrado.
-    score = re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
-    if score:
-        return int(score)
-    else:
-        return 0
+    score = re.search("(?<=Alignment Score )-?\d*", aClustalOutputString).group()
+    return int(score)
 
 
 def generateAlignmentAndCalculateScore(originalSequences, env_variables):
@@ -457,9 +457,9 @@ def generateTree(alignment, outputDir):
     command()
     tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
     Phylo.write(tree, outputDir + "/finalAlignment.dnd", "newick")
-    printAndLogInfo("Phylogenetic Tree:")
-    printAndLogInfo(Phylo.draw_ascii(tree))
-
+    print("Phylogenetic Tree:")
+    Phylo.draw_ascii(tree)
+    log.info("Phylogenetic Tree generated correctly")
 
 def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
     # Se pasa como parametro un SeqRecord
@@ -479,9 +479,14 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
             output = Entrez.read(handle)
             result = getSequencesOrderedByMaxScore(seqQuery, output)
             return result
-        except BaseException as err:
-            printAndLogCritical("ERROR: "+str(err))
-            printAndLogCritical('Internet connection error 💻🌐❌')
+        except BaseException as err:  
+            if not isinstance(err,KeyboardInterrupt) :
+               if err.reason.errno == -3:
+                    printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
+               else:    
+                    printAndLogCritical("ERROR: "+str(err.reason.strerror))
+            else:
+                printAndLogCritical("Keyboard interrupt")
             sys.exit()
 
 
@@ -497,8 +502,13 @@ def getIdsHomologousSequences(idProtein):
                 result.append(proteinList[indx].attributes['accver'])
         return result
     except BaseException as err:
-        printAndLogCritical("ERROR: "+str(err))
-        printAndLogCritical('Internet connection error 💻🌐❌')
+        if not isinstance(err,KeyboardInterrupt) :
+                if err.reason.errno == -3:
+                    printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
+                else:    
+                    printAndLogCritical("ERROR: "+str(err.reason.strerror))
+        else:
+            printAndLogCritical("Keyboard interrupt")
         sys.exit()
 
 
