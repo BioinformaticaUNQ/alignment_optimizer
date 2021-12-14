@@ -452,9 +452,9 @@ def generateTree(alignment, outputDir):
     command()
     tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
     Phylo.write(tree, outputDir + "/finalAlignment.dnd", "newick")
-    printAndLogInfo("Phylogenetic Tree:")
-    printAndLogInfo(Phylo.draw_ascii(tree))
-
+    print("Phylogenetic Tree:")
+    Phylo.draw_ascii(tree)
+    log.info("Phylogenetic Tree generated correctly")
 
 def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
     # Se pasa como parametro un SeqRecord
