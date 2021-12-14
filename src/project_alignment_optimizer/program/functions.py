@@ -421,12 +421,8 @@ def getUngappedSequences(anAlignment):
 
 
 def parseScore(aClustalOutputString):
-     # TODO: Ver si los valores negativos rompen la lógica de filtrado.
-    score = re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
-    if score:
-        return int(score)
-    else:
-        return 0
+    score = re.search("(?<=Alignment Score )-?\d*", aClustalOutputString).group()
+    return int(score)
 
 
 def generateAlignmentAndCalculateScore(originalSequences, env_variables):
