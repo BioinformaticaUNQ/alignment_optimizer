@@ -1,6 +1,6 @@
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAPEXT, GAPOPEN, HOMOLOGOUS_SEQUENCES_PATH, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, TEMP_DIR, GAPEXT, GAPOPEN, HOMOLOGOUS_SEQUENCES_PATH, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -60,7 +60,8 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
     else:
         # Calculo el nuevo score y alineamiento
         copyAl = c.deepcopy(lastAlignment)
-        newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered, env_variables)
+        newAlignment, newScore = generateNewAlignmentAndScore(
+            alignmentFiltered, env_variables)
         # Compruebo si mejoro el alineamiento
 
         if(newScore > lastScore):
@@ -93,11 +94,11 @@ def align(args, env_variables):
     try:
         currentAlignment = loadFile(fileName)
     except BaseException as err:
-         if not isinstance(err,KeyboardInterrupt) :
-                printAndLogCritical("ERROR: "+str(err))
-         else:
-                printAndLogCritical("Keyboard interrupt")   
-         sys.exit()
+        if not isinstance(err, KeyboardInterrupt):
+            printAndLogCritical("ERROR: "+str(err))
+        else:
+            printAndLogCritical("Keyboard interrupt")
+        sys.exit()
     printAndLogInfo("---------------------------------------")
 
     outputDir = createOutputDir(fileName, query_sequence_header)
@@ -122,7 +123,8 @@ def align(args, env_variables):
 
         # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
         # Este alineamiento lo descarto, ya que no me sirve
-        currentScore = generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
+        currentScore = generateAlignmentAndCalculateScore(
+            ungappedSequences, env_variables)
 
         # Genero nuevos alineamientos y sus scores correspondientes
         # Mientras aumente el score actual sigo aplicando los filtros
@@ -176,17 +178,16 @@ def align(args, env_variables):
                         str(len(bestAlignment)) + " sequences")
         printAndLogInfo("The final score is " + str(bestScore))
         printAndLogInfo("---------------------------------------")
-
         # Genero el árbol filogenético
         generateTree(bestAlignment, outputDir)
-
         printAndLogInfo("---------------------------------------")
-
-        # Exportamos el alineamiento final, el árbol y el log
+        # Exportamos el alineamiento final y el árbol 
         exportFinalAlignment(bestAlignment, outputDir)
-
         printAndLogInfo("---------------------------------------")
-        printAndLogInfo("---------------------------------------")
+        #Movemos el log
+        os.replace(TEMP_DIR + "/alignment_optimizer.log", outputDir + "/alignment_optimizer.log")
+        #Limpiamos los archivos temporales
+        [f.unlink() for f in pathlib.Path(TEMP_DIR).glob("*") if f.is_file()] 
 
     else:
         printAndLogInfo('Current amount of sequences provided is ' + str(len(currentAlignment)) +
@@ -208,7 +209,7 @@ def loadFile(filename):
                                 " aligned sequences were obtained correctly")
                 return originalAlignment
             else:
-                 raise Exception("Invalid file format")       
+                raise Exception("Invalid file format")
     else:
         raise Exception("Invalid extension file")
 
@@ -292,11 +293,11 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq, path, env_variables)
         result.sort(key=takeSecond, reverse=True)
         return [i[0] for i in result]
     except BaseException as err:
-         if not isinstance(err,KeyboardInterrupt) :
-                printAndLogCritical("ERROR: "+str(err))
-         else:
-                printAndLogCritical("Keyboard interrupt")  
-         sys.exit()
+        if not isinstance(err, KeyboardInterrupt):
+            printAndLogCritical("ERROR: "+str(err))
+        else:
+            printAndLogCritical("Keyboard interrupt")
+        sys.exit()
 
 
 def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_variables):
@@ -431,10 +432,9 @@ def parseScore(aClustalOutputString):
 
 def generateAlignmentAndCalculateScore(originalSequences, env_variables):
     # Genero el nuevo alineamiento por medio de CLUSTAL
-    tempDir = str(pathlib.Path(__file__).parent.resolve())
-    SeqIO.write(originalSequences, (tempDir + "/seqs.fasta"), "fasta")
+    SeqIO.write(originalSequences, (TEMP_DIR + "/seqs.fasta"), "fasta")
     command = ClustalwCommandline(
-        CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"), gapopen=env_variables[GAPOPEN], gapext=env_variables[GAPEXT], matrix=env_variables[MATRIX])
+        CLUSTALW_PATH, infile=(TEMP_DIR + "/seqs.fasta"), gapopen=env_variables[GAPOPEN], gapext=env_variables[GAPEXT], matrix=env_variables[MATRIX])
     clusalAlignmentOutput = command()
     score = parseScore(clusalAlignmentOutput[0])
     printAndLogInfo(f"New alignment Score: {score}")
@@ -442,23 +442,25 @@ def generateAlignmentAndCalculateScore(originalSequences, env_variables):
 
 
 def loadCurrentAlignment():
-    tempDir = str(pathlib.Path(__file__).parent.resolve())
-    return AlignIO.read(tempDir + "/seqs.aln", "clustal")
+
+    return AlignIO.read(TEMP_DIR + "/seqs.aln", "clustal")
 
 
 def generateTree(alignment, outputDir):
     # Genero el árbol filogenético
     printAndLogInfo("Generating Phylogenetic Tree")
-    tempDir = str(pathlib.Path(__file__).parent.absolute())
-    SeqIO.write(alignment, (tempDir + "/finalAlignment.fasta"), "fasta")
+    SeqIO.write(alignment, (TEMP_DIR + "/finalAlignment.fasta"), "fasta")
     command = ClustalwCommandline(
-        CLUSTALW_PATH, infile=(tempDir + "/finalAlignment.fasta"))
+        CLUSTALW_PATH, infile=(TEMP_DIR + "/finalAlignment.fasta"))
     command()
-    tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
-    Phylo.write(tree, outputDir + "/finalAlignment.dnd", "newick")
+    tree = Phylo.read(TEMP_DIR + "/finalAlignment.dnd", "newick")
+    outputTree = outputDir + "/finalAlignmentTree.dnd"
+    Phylo.write(tree, outputTree, "newick")
     print("Phylogenetic Tree:")
     Phylo.draw_ascii(tree)
-    log.info("Phylogenetic Tree generated correctly")
+    printAndLogInfo("---------------------------------------")
+    printAndLogInfo(f"Phylogenetic Tree exported as {outputTree}")
+
 
 def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
     # Se pasa como parametro un SeqRecord
@@ -478,11 +480,11 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
             output = Entrez.read(handle)
             result = getSequencesOrderedByMaxScore(seqQuery, output)
             return result
-        except BaseException as err:  
-            if not isinstance(err,KeyboardInterrupt) :
-               if err.reason.errno == -3:
+        except BaseException as err:
+            if not isinstance(err, KeyboardInterrupt):
+                if err.reason.errno == -3:
                     printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
-               else:    
+                else:
                     printAndLogCritical("ERROR: "+str(err.reason.strerror))
             else:
                 printAndLogCritical("Keyboard interrupt")
@@ -501,11 +503,11 @@ def getIdsHomologousSequences(idProtein):
                 result.append(proteinList[indx].attributes['accver'])
         return result
     except BaseException as err:
-        if not isinstance(err,KeyboardInterrupt) :
-                if err.reason.errno == -3:
-                    printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
-                else:    
-                    printAndLogCritical("ERROR: "+str(err.reason.strerror))
+        if not isinstance(err, KeyboardInterrupt):
+            if err.reason.errno == -3:
+                printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
+            else:
+                printAndLogCritical("ERROR: "+str(err.reason.strerror))
         else:
             printAndLogCritical("Keyboard interrupt")
         sys.exit()
@@ -541,14 +543,14 @@ def exportFinalAlignment(bestAlignment, outputDir):
     name = "alignment.fasta"
     filePath = dir + "/" + name
     AlignIO.write(bestAlignment, filePath, "fasta")
-    printAndLogInfo(f"Output exported as {filePath}")
+    printAndLogInfo(f"Output Alignment exported as {filePath}")
 
 
 def createOutputDir(inputPath, querySeq):
     parent = str(pathlib.Path(inputPath).parent.resolve())
 
     inputName = str(pathlib.Path(inputPath).name).split(".")[0]
-    timestamp = str(datetime.datetime.now())[:-7]
+    timestamp = str(datetime.datetime.now())[:-7].replace(" ", "_")
     folderName = "[" + timestamp + "]" + inputName + "-" + querySeq
     folderPath = parent + "/" + folderName
     pathlib.Path(folderPath).mkdir()
