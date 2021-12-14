@@ -68,21 +68,31 @@ def test_filter_sequence_most_gapped_inject_homologous():
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
-   variables_service.setVariableEnv(MIN_SEQUENCES,95)
+   variables_service.setVariableEnv(MIN_SEQUENCES,93)
    mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    seqs_homologous_before_load= homologousInCollection(currentAlignment,homologousSequences)
+
+   ungappedSequences = functions.getUngappedSequences(currentAlignment)
+   currentScore = functions.generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
    breakpoint()
    assert len(seqs_homologous_before_load)==0
    #busco la que más gaps tiene
    sequence_most_gap = functions.sequenceWithMostGaps(currentAlignment, query_seq,env_variables)
-
-   aligment_filtered =  functions.filterSequence(0,currentAlignment, query_seq, homologousSequences, env_variables)
+   aligment_filtered =  functions.filterSequence(1,currentAlignment, query_seq, homologousSequences, env_variables)
+   alignmentWithHomologousSequence, homologousSequence = functions.addHomologousSequence(
+            aligment_filtered, homologousSequences)
    
+   
+   #improve, aligment_last_filtered, currentScore = functions.excuteSecondAlgorithm(
+   #                 currentAlignment, query_seq, homologousSequences, currentScore, env_variables)
+
+   
+   secuence = list(filter(lambda al: al.seq == sequence_most_gap.seq,aligment_filtered))
    breakpoint()
    
    #sequences_without_seq_most_gaps = functions.filterSequenceWithMostGaps(aligment_filtered, query_sec_header, env_variables, homologousSequences)
-   seqs_homologous_after_load= homologousInCollection(aligment_filtered,homologousSequences)
+   seqs_homologous_after_load= list(filter(lambda al: al.id == homologousSequence.id,alignmentWithHomologousSequence))
    #ver que aca tendria que agregar la homologa .
    assert len(seqs_homologous_after_load)==1
 
