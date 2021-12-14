@@ -47,17 +47,15 @@ def test_filter_sequence_provides_most_gapped_doesnt_inject_homologous():
 
    assert len(seqs_homologous_before_load) == 0
    #busco la que más gaps tiene
-   sequence_provides_most_gaps = functions.sequenceWithMostGaps(currentAlignment, query_seq, env_variables)
+   sequence_provides_most_gaps = functions.sequenceProvidesMostGaps(currentAlignment, query_seq)
    #aca ver que traiga las seqs no la que va a sacar 
-   breakpoint()
-   
-   sequences_without_seq_most_gaped = functions.filterSequence(0,currentAlignment, query_seq, homologousSequences, env_variables)
-   
+   assert sequence_provides_most_gaps.id == '1XQI_A'
+
+   sequences_without_seq_most_gaped = functions.filterSequence(0,currentAlignment, query_seq, homologousSequences, env_variables) 
    seqs_homologous_after_load = homologousInCollection(sequences_without_seq_most_gaped,homologousSequences)
    #ver que aca tendria que agregar la homologa .
    assert len(seqs_homologous_after_load)==0
    
-
 
 def test_filter_sequence_most_gapped_inject_homologous():
    # se agrega una homologa porque llega al minimo de secuencias
@@ -73,27 +71,18 @@ def test_filter_sequence_most_gapped_inject_homologous():
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    seqs_homologous_before_load= homologousInCollection(currentAlignment,homologousSequences)
 
-   ungappedSequences = functions.getUngappedSequences(currentAlignment)
-   currentScore = functions.generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
-   breakpoint()
+   assert len(currentAlignment) == 93
    assert len(seqs_homologous_before_load)==0
-   #busco la que más gaps tiene
+
    sequence_most_gap = functions.sequenceWithMostGaps(currentAlignment, query_seq,env_variables)
+   assert sequence_most_gap.id == '4ANC_A'
+
    aligment_filtered =  functions.filterSequence(1,currentAlignment, query_seq, homologousSequences, env_variables)
    alignmentWithHomologousSequence, homologousSequence = functions.addHomologousSequence(
             aligment_filtered, homologousSequences)
-   
-   
-   #improve, aligment_last_filtered, currentScore = functions.excuteSecondAlgorithm(
-   #                 currentAlignment, query_seq, homologousSequences, currentScore, env_variables)
-
-   
-   secuence = list(filter(lambda al: al.seq == sequence_most_gap.seq,aligment_filtered))
-   breakpoint()
-   
-   #sequences_without_seq_most_gaps = functions.filterSequenceWithMostGaps(aligment_filtered, query_sec_header, env_variables, homologousSequences)
    seqs_homologous_after_load= list(filter(lambda al: al.id == homologousSequence.id,alignmentWithHomologousSequence))
-   #ver que aca tendria que agregar la homologa .
+   #verificar que se agrego una secuencia homologa al alineamiento . y se mantiene la cantidad original de secuencias
+   assert len(alignmentWithHomologousSequence) == 93
    assert len(seqs_homologous_after_load)==1
 
 
