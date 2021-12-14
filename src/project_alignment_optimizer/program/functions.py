@@ -1,7 +1,7 @@
 
 # coding=utf-8
 
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, HOMOLOGOUS_SEQUENCES_PATH, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, GAPEXT, GAPOPEN, HOMOLOGOUS_SEQUENCES_PATH, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, GAP_PENALTY, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -12,6 +12,7 @@ import re
 import os
 import sys
 import copy as c
+import datetime
 
 
 # ---------------------
@@ -22,7 +23,7 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
     for alignment in currentAlignment:
         if alignment.id == query_sequence_header:
             return alignment
-    
+
     printAndLogCritical(f"The header {query_sequence_header} has not been found.")
     sys.exit()
 
@@ -30,7 +31,8 @@ def find_alignment_by_header(currentAlignment, query_sequence_header):
 def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps
     # El tipo de filtrado es el 0
-    alignmentFiltered = filterSequence(0, lastAlignment, querySeq, homologousSequences, env_variables)
+    alignmentFiltered = filterSequence(
+        0, lastAlignment, querySeq, homologousSequences, env_variables)
     # Ejecuto el algoritmo
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
 
@@ -38,7 +40,8 @@ def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScor
 def excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas gaps de todo el alineamiento
     # El tipo de filtrado es el 1
-    alignmentFiltered = filterSequence(1, lastAlignment, querySeq, homologousSequences, env_variables)
+    alignmentFiltered = filterSequence(
+        1, lastAlignment, querySeq, homologousSequences, env_variables)
     # Ejecuto el algoritmo
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
 
@@ -46,8 +49,10 @@ def excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScor
 def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables):
     min_sequences = env_variables[MIN_SEQUENCES]
     if len(alignmentFiltered) < min_sequences:
-        alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(alignmentFiltered, homologousSequences)
-        newAlignment, newScore = generateNewAlignmentAndScore(alignmentWithHomologousSequence)
+        alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(
+            alignmentFiltered, homologousSequences)
+        newAlignment, newScore = generateNewAlignmentAndScore(
+            alignmentWithHomologousSequence, env_variables)
         if(newScore > lastScore):
             return True, newAlignment, newScore
         else:
@@ -56,9 +61,9 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
     else:
         # Calculo el nuevo score y alineamiento
         copyAl = c.deepcopy(lastAlignment)
-        newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered)
-        # Compruebo si mejoro el alineamiento 
-        
+        newAlignment, newScore = generateNewAlignmentAndScore(alignmentFiltered, env_variables)
+        # Compruebo si mejoro el alineamiento
+
         if(newScore > lastScore):
             return True, newAlignment, newScore
         else:
@@ -66,8 +71,10 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
             # Como no mejoro, si acepta secuiencias homologas y todavia quedan por agregar, agrego una de ellas
             admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
             if (admit_homologous == 1) and (len(homologousSequences) > 0):
-                alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(newAlignment, homologousSequences)
-                newAlignment, newScore = generateNewAlignmentAndScore(alignmentWithHomologousSequence)
+                alignmentWithHomologousSequence, homologousSequence = addHomologousSequence(
+                    newAlignment, homologousSequences)
+                newAlignment, newScore = generateNewAlignmentAndScore(
+                    alignmentWithHomologousSequence, env_variables)
                 if(newScore > lastScore):
                     return True, newAlignment, newScore
                 else:
@@ -86,10 +93,12 @@ def align(args, env_variables):
     # Cargo el archivo con el alineamiento inicial que me pasa el usuario
     try:
         currentAlignment = loadFile(fileName)
-    except:
-         printAndLogInfo("Invalid file extension")
-         sys.exit()
+    except BaseException as err:
+        printAndLogInfo("ERROR: "+str(err))
+        sys.exit()
     printAndLogInfo("---------------------------------------")
+
+    outputDir = createOutputDir(fileName, query_sequence_header)
 
     if(alignmentHasNMinSequences(currentAlignment, env_variables)):
 
@@ -102,7 +111,8 @@ def align(args, env_variables):
         printAndLogInfo("---------------------------------------")
 
         # Obtengo las secuencias homologas
-        homologousSequences = getHomologousSequences(querySeq, currentAlignment, env_variables, args.homologous_sequences_path)
+        homologousSequences = getHomologousSequences(
+            querySeq, currentAlignment, env_variables, args.homologous_sequences_path)
 
         # Obtengo las secuencias originales
         seqsAux = c.deepcopy(currentAlignment)
@@ -110,7 +120,7 @@ def align(args, env_variables):
 
         # Genero el alineamiento para obtener el score perteneciente al alineamiento inicial pasado por el usuario
         # Este alineamiento lo descarto, ya que no me sirve
-        currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
+        currentScore = generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
 
         # Genero nuevos alineamientos y sus scores correspondientes
         # Mientras aumente el score actual sigo aplicando los filtros
@@ -124,9 +134,11 @@ def align(args, env_variables):
             lastScore = currentScore
             printAndLogInfo("---------------------------------------")
             # Hago el primer filtrado (Saco la secuencia que tenga mas aminoacidos en las columnas donde la query tenga gaps)
-            printAndLogInfo("ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
-            
-            improve, currentAlignment, currentScore = executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables)
+            printAndLogInfo(
+                "ALGORITHM 1 - Filter sequence that introduces most gaps to the Query Sequence:")
+
+            improve, currentAlignment, currentScore = executeFirstAlgorithm(
+                lastAlignment, querySeq, homologousSequences, lastScore, env_variables)
             querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
             if(improve):
                 bestAlignment = currentAlignment
@@ -140,9 +152,11 @@ def align(args, env_variables):
                 printAndLogInfo("---------------------------------------")
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
-                #aca se caga, currentAligmnet no es un alineamiento sino secuencias sin gaps. 
-                improve, currentAlignment, currentScore = excuteSecondAlgorithm(copyLastAlignment, querySeq, homologousSequences, currentScore, env_variables)
-                querySeq = find_alignment_by_header(currentAlignment, query_sequence_header)
+                # aca se caga, currentAligmnet no es un alineamiento sino secuencias sin gaps.
+                improve, currentAlignment, currentScore = excuteSecondAlgorithm(
+                    copyLastAlignment, querySeq, homologousSequences, currentScore, env_variables)
+                querySeq = find_alignment_by_header(
+                    currentAlignment, query_sequence_header)
 
                 if(improve):
                     bestAlignment = currentAlignment
@@ -156,24 +170,25 @@ def align(args, env_variables):
                     printAndLogInfo("The alignment score didn't improve 😖")
                     printAndLogInfo("---------------------------------------")
 
-        printAndLogInfo("The best alignment obtained contains " + str(len(bestAlignment)) + " sequences")
+        printAndLogInfo("The best alignment obtained contains " +
+                        str(len(bestAlignment)) + " sequences")
         printAndLogInfo("The final score is " + str(bestScore))
         printAndLogInfo("---------------------------------------")
 
         # Genero el árbol filogenético
-        generateTree(bestAlignment)
+        generateTree(bestAlignment, outputDir)
 
         printAndLogInfo("---------------------------------------")
 
         # Exportamos el alineamiento final, el árbol y el log
-        exportFinalAlignment(bestAlignment, fileName)
+        exportFinalAlignment(bestAlignment, outputDir)
 
         printAndLogInfo("---------------------------------------")
         printAndLogInfo("---------------------------------------")
-        
+
     else:
-        printAndLogInfo('Current amount of sequences provided is ' + str(len(currentAlignment)) + 
-        ' and it is less than the minimum of sequences established for the alignment')
+        printAndLogInfo('Current amount of sequences provided is ' + str(len(currentAlignment)) +
+                        ' and it is less than the minimum of sequences established for the alignment')
 
 
 def loadFile(filename):
@@ -183,15 +198,18 @@ def loadFile(filename):
     # Obtengo el archivo con el alineamiento inicial
     checkIsValidPath(filename)
     printAndLogInfo("Getting Alignments")
-    with open(filename, "r") as handle:
-
-        originalAlignment = AlignIO.read(handle, "fasta")
-        if (any(originalAlignment)):
-            printAndLogInfo(str(len(originalAlignment)) + " aligned sequences were obtained correctly")
-            return originalAlignment
-        else:
-            printAndLogCritical("Invalid file format")
-            sys.exit()
+    if filename.lower().endswith(('.fasta')):
+        with open(filename, "r") as handle:
+            originalAlignment = AlignIO.read(handle, "fasta")
+            if (any(originalAlignment)):
+                printAndLogInfo(str(len(originalAlignment)) +
+                                " aligned sequences were obtained correctly")
+                return originalAlignment
+            else:
+                printAndLogCritical("Invalid file format")
+                sys.exit()
+    else:
+        raise Exception("Invalid extension file")
 
 
 def checkIsValidPath(filename):
@@ -215,21 +233,24 @@ def trimPurifyingSequences(anAlignment, env_variables):
                 end = len(anAlignment[i].seq) - removeEnd
                 seq = seq[start:end]
                 anAlignment[i].seq = Seq(seq)
-            printAndLogInfo("The alignment was cut " + str(removeStart) + " positions at the beginning and " + str(removeEnd) + " positions at the end")
+            printAndLogInfo("The alignment was cut " + str(removeStart) +
+                            " positions at the beginning and " + str(removeEnd) + " positions at the end")
             printAndLogInfo("---------------------------------------")
         else:
-            printAndLogCritical("The length of the alignment is shorter than the total positions to be cut from the purifiers.")
+            printAndLogCritical(
+                "The length of the alignment is shorter than the total positions to be cut from the purifiers.")
             sys.exit()
     return anAlignment
 
 
 def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
-    admit_homologous = env_variables[ADMIT_HOMOLOGOUS] 
+    admit_homologous = env_variables[ADMIT_HOMOLOGOUS]
     if admit_homologous == 1:
         printAndLogInfo("Getting Homologous Sequences")
         db_hs = env_variables[DB_HOMOLOGOUS_SEQUENCES]
         if db_hs == 0:
-            homologousSequences = getHomologousSequencesOrderedByMaxScore(querySeq, env_variables)
+            homologousSequences = getHomologousSequencesOrderedByMaxScore(
+                querySeq, env_variables)
         elif db_hs == 1:
             path = None
 
@@ -238,23 +259,26 @@ def getHomologousSequences(querySeq, sequences, env_variables, homologous_path):
 
             if path:
                 checkIsValidPath(path)
-                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables)
+                homologousSequences = getHomologousSequencesForFastaOrderByMaxScore(
+                    querySeq, path, env_variables)
             else:
                 printAndLogCritical("Invalid homologous database path")
                 sys.exit()
-        
-        response = list(filter(lambda seq: seq.id != sequences[0].id, homologousSequences))
-        for ind in range(1,len(sequences)):
+
+        response = list(filter(lambda seq: seq.id !=
+                        sequences[0].id, homologousSequences))
+        for ind in range(1, len(sequences)):
             response = list(filter(lambda seq: seq.id != sequences[ind].id, response))
 
-        printAndLogInfo(str(len(response)) + " homologous sequences were obtained correctly")
+        printAndLogInfo(str(len(response)) +
+                        " homologous sequences were obtained correctly")
         printAndLogInfo("---------------------------------------")
         return response
     else:
         return []
 
 
-def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables):
+def getHomologousSequencesForFastaOrderByMaxScore(querySeq, path, env_variables):
     try:
         sequences = loadFile(path)
         result = []
@@ -263,12 +287,13 @@ def getHomologousSequencesForFastaOrderByMaxScore(querySeq,path, env_variables):
             nHomologous = len(sequences)
         tmp = sequences[:nHomologous]
         for seq in tmp:
-            result.append((seq,pairwise2.align.globalxx(querySeq.seq, seq.seq,score_only=True)))
-        result.sort(key=takeSecond,reverse=True)
-        return [i[0] for i in result] 
-    except:
-      printAndLogInfo("Invalid file extension homologous sequences")
-      sys.exit()
+            result.append((seq, pairwise2.align.globalxx(
+                querySeq.seq, seq.seq, score_only=True)))
+        result.sort(key=takeSecond, reverse=True)
+        return [i[0] for i in result]
+    except BaseException as err:
+        printAndLogInfo("ERROR: " + str(err))
+        sys.exit()
 
 
 def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_variables):
@@ -288,7 +313,8 @@ def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_v
             # Saco la secuencia que tiene mas gaps
             seqToRemove = sequenceWithMostGaps(anAlignment, querySeq, env_variables)
 
-        printAndLogInfo("Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
+        printAndLogInfo(
+            "Sequence {id} has been removed from the alignment.".format(id=seqToRemove.id))
         sequences = list(filter(lambda seq: seq.id != seqToRemove.id, anAlignment))
         printAndLogInfo(str(len(sequences)) + " sequences left.")
         printAndLogInfo("Current Alignment: " + str(len(sequences)))
@@ -296,45 +322,48 @@ def filterSequence(filterType, anAlignment, querySeq, homologousSequences, env_v
     else:
         if condition2 and (not condition3):
             # La longitud del alineamiento es igual al minimo de secuencias y no acepta homologas
-            printAndLogInfo("The alignment cannot be filtered because the minimum has already been reached")
+            printAndLogInfo(
+                "The alignment cannot be filtered because the minimum has already been reached")
         elif condition2 and condition3 and (not condition4):
             # La longitud del alineamiento es igual al minimo de secuencias, acepta secuencias homologas, pero no hay mas para agregar
-            printAndLogInfo("The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
+            printAndLogInfo(
+                "The alignment cannot be filtered because there are no homologous sequences left to add and the minimum has already been reached")
         return anAlignment
 
 
 def sequenceProvidesMostGaps(anAlignment, querySeq):
     # Me fijo en que posiciones hay gaps y guardo los indices en una lista
-        indices = []
-        for i in range(0,len(querySeq.seq)):
-            if querySeq.seq[i] == '-':
-                indices.append(i)
-        # Recorro todas las secuencias y me voy quedando con los indices que esten en la lista
-        countSeqToRemove = -1
-        for x in range(0,len(anAlignment)):
-            seq = anAlignment[x].seq
-            count = 0
-            for y in indices:
-                # Una vez obtenido esas secuencias filtradas, busco la que tenga mayor numero de aminoaciodos y esa es la que voy a eliminar
-                if seq[y] != '-':
-                    count += 1
-            if count > countSeqToRemove and querySeq.id != anAlignment[x].id:
-                countSeqToRemove = count
-                seqToRemove = anAlignment[x]
-        return seqToRemove
+    indices = []
+    for i in range(0, len(querySeq.seq)):
+        if querySeq.seq[i] == '-':
+            indices.append(i)
+    # Recorro todas las secuencias y me voy quedando con los indices que esten en la lista
+    countSeqToRemove = -1
+    for x in range(0, len(anAlignment)):
+        seq = anAlignment[x].seq
+        count = 0
+        for y in indices:
+            # Una vez obtenido esas secuencias filtradas, busco la que tenga mayor numero de aminoaciodos y esa es la que voy a eliminar
+            if seq[y] != '-':
+                count += 1
+        if count > countSeqToRemove and querySeq.id != anAlignment[x].id:
+            countSeqToRemove = count
+            seqToRemove = anAlignment[x]
+    return seqToRemove
 
 
 def sequenceWithMostGaps(anAlignment, querySeq, env_variables):
-        if querySeq.id != anAlignment[0].id:
-                mostGappedSeq = anAlignment[0]
-                start = 1
-        else:
-            mostGappedSeq = anAlignment[1]
-            start = 2
-        for ind in range(start,len(anAlignment)):
-            if querySeq.id != anAlignment[ind].id:
-                mostGappedSeq = mostGapped(mostGappedSeq, anAlignment[ind], querySeq, env_variables)
-        return mostGappedSeq
+    if querySeq.id != anAlignment[0].id:
+        mostGappedSeq = anAlignment[0]
+        start = 1
+    else:
+        mostGappedSeq = anAlignment[1]
+        start = 2
+    for ind in range(start, len(anAlignment)):
+        if querySeq.id != anAlignment[ind].id:
+            mostGappedSeq = mostGapped(
+                mostGappedSeq, anAlignment[ind], querySeq, env_variables)
+    return mostGappedSeq
 
 
 def homologousSequenceToAdd(homologousSequences):
@@ -349,7 +378,7 @@ def addHomologousSequence(sequences, homologousSequences):
     nSeqAlignment = len(sequences[0].seq)
     nTotal = nSeqAlignment - nNewSeq
     seqFinal = seqToAdd + Seq("-"*nTotal)
-    responseSequences = list(filter(lambda seq: True, sequences)) 
+    responseSequences = list(filter(lambda seq: True, sequences))
     responseSequences.append(seqFinal)
     printAndLogInfo("Current Alignment: " + str(len(responseSequences)))
     return responseSequences, seqToAdd
@@ -368,7 +397,8 @@ def mostGapped(aSequence, anotherSequence, aQuerySequence, env_variables):
         aligner.match_score = env_variables[MATCH]
         aligner.mismatch_score = env_variables[MISMATCH]
         alignment1 = aligner.align(aSequence.seq.ungap(), aQuerySequence.seq.ungap())
-        alignment2 = aligner.align(anotherSequence.seq.ungap(), aQuerySequence.seq.ungap())
+        alignment2 = aligner.align(anotherSequence.seq.ungap(),
+                                   aQuerySequence.seq.ungap())
         if alignment1.score < alignment2.score:
             return aSequence
         else:
@@ -392,18 +422,27 @@ def getUngappedSequences(anAlignment):
 
 
 def parseScore(aClustalOutputString):
-    return re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
+     # TODO: Ver si los valores negativos rompen la lógica de filtrado.
+    score = re.search("(?<=Alignment Score )\d*", aClustalOutputString).group()
+    if score:
+        return int(score)
+    else:
+        return 0
 
-
+<<<<<<< HEAD
 def generateAlignmentAndCalculateScore(originalSequences):
+=======
+
+def generateAlignmentAndCalculateScore(originalSequences, env_variables):
+>>>>>>> 8c7eec73acc42512b269e62ebb9a3f106806ab66
     # Genero el nuevo alineamiento por medio de CLUSTAL
     tempDir = str(pathlib.Path(__file__).parent.resolve())
     SeqIO.write(originalSequences, (tempDir + "/seqs.fasta"), "fasta")
     command = ClustalwCommandline(
-        CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"))
+        CLUSTALW_PATH, infile=(tempDir + "/seqs.fasta"), gapopen=env_variables[GAPOPEN], gapext=env_variables[GAPEXT], matrix=env_variables[MATRIX])
     clusalAlignmentOutput = command()
     score = parseScore(clusalAlignmentOutput[0])
-    printAndLogInfo("New alignment Score: " + score)
+    printAndLogInfo(f"New alignment Score: {score}")
     return score
 
 
@@ -412,7 +451,7 @@ def loadCurrentAlignment():
     return AlignIO.read(tempDir + "/seqs.aln", "clustal")
 
 
-def generateTree(alignment):
+def generateTree(alignment, outputDir):
     # Genero el árbol filogenético
     printAndLogInfo("Generating Phylogenetic Tree")
     tempDir = str(pathlib.Path(__file__).parent.absolute())
@@ -421,14 +460,15 @@ def generateTree(alignment):
         CLUSTALW_PATH, infile=(tempDir + "/finalAlignment.fasta"))
     command()
     tree = Phylo.read(tempDir + "/finalAlignment.dnd", "newick")
+    Phylo.write(tree, outputDir + "/finalAlignment.dnd", "newick")
     printAndLogInfo("Phylogenetic Tree:")
     printAndLogInfo(Phylo.draw_ascii(tree))
 
 
 def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
-    #Se pasa como parametro un SeqRecord
-    #y devuelve una lista de SeqRecord 
-    #ordenada de mayor a menor por score con la seqQuery
+    # Se pasa como parametro un SeqRecord
+    # y devuelve una lista de SeqRecord
+    # ordenada de mayor a menor por score con la seqQuery
     result = []
     idsProteins = getIdsHomologousSequences(seqQuery.id)
     if idsProteins:
@@ -438,11 +478,13 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
         Entrez.email = "A.N.Other@example.com"
         idString = idString[0:len(idString)-1]
         try:
-            handle = Entrez.efetch(db="protein", id=idString, rettype="gb", retmode="xml",retmax= env_variables[N_HOMOLOGOUS_SEQUENCES])
+            handle = Entrez.efetch(db="protein", id=idString, rettype="gb",
+                                   retmode="xml", retmax=env_variables[N_HOMOLOGOUS_SEQUENCES])
             output = Entrez.read(handle)
             result = getSequencesOrderedByMaxScore(seqQuery, output)
             return result
-        except:
+        except BaseException as err:
+            printAndLogCritical("ERROR: "+str(err))
             printAndLogCritical('Internet connection error 💻🌐❌')
             sys.exit()
 
@@ -455,13 +497,13 @@ def getIdsHomologousSequences(idProtein):
         proteinList = output['IPGReport']['ProteinList']
         result = []
         if proteinList:
-            for indx in range(0,len(proteinList)):
+            for indx in range(0, len(proteinList)):
                 result.append(proteinList[indx].attributes['accver'])
         return result
-    except:
+    except BaseException as err:
+        printAndLogCritical("ERROR: "+str(err))
         printAndLogCritical('Internet connection error 💻🌐❌')
         sys.exit()
-   
 
 
 def getSequencesOrderedByMaxScore(seqQuery, output):
@@ -470,29 +512,43 @@ def getSequencesOrderedByMaxScore(seqQuery, output):
         for protein in output:
             if protein:
                 descriptor = protein["GBSeq_locus"]
-                seqHomologous = SeqRecord(Seq(protein["GBSeq_sequence"].upper()), id =descriptor, name=descriptor, description=descriptor)
-                result.append((seqHomologous,pairwise2.align.globalxx(seqQuery.seq, seqHomologous.seq, score_only=True)))
-        result.sort(key=takeSecond,reverse=True)
-    return [i[0] for i in result] 
+                seqHomologous = SeqRecord(Seq(protein["GBSeq_sequence"].upper(
+                )), id=descriptor, name=descriptor, description=descriptor)
+                result.append((seqHomologous, pairwise2.align.globalxx(
+                    seqQuery.seq, seqHomologous.seq, score_only=True)))
+        result.sort(key=takeSecond, reverse=True)
+    return [i[0] for i in result]
 
 
 def takeSecond(elem):
     return elem[1]
 
 
-def generateNewAlignmentAndScore(alignmentFiltered):
+def generateNewAlignmentAndScore(alignmentFiltered, env_variables):
     ungappedSequences = getUngappedSequences(alignmentFiltered)
-    currentScore = generateAlignmentAndCalculateScore(ungappedSequences)
+    currentScore = generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
     currentAlignment = loadCurrentAlignment()
     return currentAlignment, currentScore
 
 
-def exportFinalAlignment(bestAlignment, filename):
-    dir = str(pathlib.Path(filename).parent.resolve())
-    name = str(pathlib.Path(filename).name).split(".")[0]
-    output = dir + "/" + name + "_output.fasta"
-    AlignIO.write(bestAlignment, (output), "fasta")
-    printAndLogInfo(f"Output exported as {output}")
+def exportFinalAlignment(bestAlignment, outputDir):
+    dir = str(pathlib.Path(outputDir).resolve())
+    name = "alignment.fasta"
+    filePath = dir + "/" + name
+    AlignIO.write(bestAlignment, filePath, "fasta")
+    printAndLogInfo(f"Output exported as {filePath}")
+
+
+def createOutputDir(inputPath, querySeq):
+    parent = str(pathlib.Path(inputPath).parent.resolve())
+
+    inputName = str(pathlib.Path(inputPath).name).split(".")[0]
+    timestamp = str(datetime.datetime.now())[:-7]
+    folderName = "[" + timestamp + "]" + inputName + "-" + querySeq
+    folderPath = parent + "/" + folderName
+    pathlib.Path(folderPath).mkdir()
+
+    return folderPath
 
 
 def query_yes_no(question):
