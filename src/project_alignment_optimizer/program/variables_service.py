@@ -10,6 +10,9 @@ dotenv.load_dotenv(dotenv_file)
 def getVariableIntEnv(key):
     return int(os.environ[key])
 
+def getVariableFloatEnv(key):
+    return float(os.environ[key])
+
 def getVariableStrEnv(key):
     return os.environ[key]
 
