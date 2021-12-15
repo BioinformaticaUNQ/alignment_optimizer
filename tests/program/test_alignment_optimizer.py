@@ -44,8 +44,6 @@ def test_filter_aligment_with_more_amount_of_aacc():
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,90)
-   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
-
    variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,0)
    dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
 
@@ -69,7 +67,7 @@ def test_filter_sequence_provides_most_gapped_doesnt_inject_homologous():
    hom_path = None
 
    variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,1)
-   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
 
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
@@ -100,9 +98,9 @@ def test_filter_sequence_most_gapped_inject_homologous():
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,93)
-   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variablesEQUENCES)
    variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,1)
-   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
+   
    
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    seqs_homologous_before_load= homologousInCollection(currentAlignment,homologousSequences)
