@@ -36,15 +36,19 @@ def validateKey(key, value):
     elif key == PURIFY_END:
         return validatePositiveInt(value)
     elif key == GAPOPEN:
-        return validateInt(value)
+        return validateFloat(value)
     elif key == GAPEXT:
-        return validateInt(value)
+        return validateFloat(value)
     elif key == MATRIX:
         return True, None
     else:
         return False, 'Error'
 
 def validateInt(value):
+    if value == None or value == '':
+        message = f"No new value was inserted."
+        return False, message
+
     isInt = re.match("[-+]?\d+$", value)
     if not isInt:
         message = f"The new value: '{value}' is not valid as an integer."
@@ -52,7 +56,23 @@ def validateInt(value):
 
     return True, None
 
+def validateFloat(value):
+    if value == None or value == '':
+        message = f"No new value was inserted."
+        return False, message
+
+    isInt = re.match("[-+]?\d*\.?\d*$", value)
+    if not isInt:
+        message = f"The new value: '{value}' is not valid as a float."
+        return False, message
+
+    return True, None
+
 def validatePositiveInt(value):
+    if value == None or value == '':
+        message = f"No new value was inserted."
+        return False, message
+
     isInt, message = validateInt(value)
     if not isInt:
         return isInt, message
@@ -65,6 +85,10 @@ def validatePositiveInt(value):
     return True, None
 
 def validateTypeRange(key, value):
+    if value == None or value == '':
+        message = f"No new value was inserted."
+        return False, message
+
     isInt, message = validateInt(value)
     if not isInt:
         return isInt, message
@@ -91,6 +115,10 @@ def getDictVariablesValues():
         # Agrego al dict con el value tipo int
         dictVariablesValues[variable_env] = int(os.environ[variable_env])
 
+    for variable_env in ALL_ENV_VARIABLES_FLOATS:
+        # Agrego al dict con el value tipo float
+        dictVariablesValues[variable_env] = float(os.environ[variable_env])
+
     for variable_env in ALL_ENV_VARIABLES_STRINGS:
         # Agrego al dict con el value tipo str
         dictVariablesValues[variable_env] = os.environ[variable_env]
@@ -114,8 +142,13 @@ def getDictVariablesWithAllInfo():
 def getValueVariable(variableName):
     if variableName in ALL_ENV_VARIABLES_STRINGS:
         return os.environ[variableName]
-    else:
+    if variableName in ALL_ENV_VARIABLES_INT:
         return int(os.environ[variableName])
+    if variableName in ALL_ENV_VARIABLES_FLOATS:
+        return float(os.environ[variableName])
+    
+    return None
+    
 
 def getAllVariablesTable(args):
     table = PrettyTable(['Key', 'Current value'])
