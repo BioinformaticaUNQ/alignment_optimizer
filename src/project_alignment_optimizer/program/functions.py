@@ -1,5 +1,7 @@
 # coding=utf-8
 
+from urllib.request import Request
+import Bio
 from project_alignment_optimizer.program.constants import CLUSTALW_PATH, TEMP_DIR, GAPEXT, GAPOPEN, HOMOLOGOUS_SEQUENCES_PATH, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
@@ -478,36 +480,46 @@ def getHomologousSequencesOrderedByMaxScore(seqQuery, env_variables):
             handle = Entrez.efetch(db="protein", id=idString, rettype="gb",
                                    retmode="xml", retmax=env_variables[N_HOMOLOGOUS_SEQUENCES])
             output = Entrez.read(handle)
-            result = getSequencesOrderedByMaxScore(seqQuery, output)
+            if output:
+                result = getSequencesOrderedByMaxScore(seqQuery, output)
             return result
-        except BaseException as err:
+        except Exception as err:
             if not isinstance(err, KeyboardInterrupt):
-                if err.reason.errno == -3:
+                if isinstance(err,OSError) and err.reason.errno == -3:
                     printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
                 else:
-                    printAndLogCritical("ERROR: "+str(err.reason.strerror))
+                    printAndLogCritical("ERROR: "+str(err))
             else:
                 printAndLogCritical("Keyboard interrupt")
             sys.exit()
+    else:
+        return result
 
 
 def getIdsHomologousSequences(idProtein):
     Entrez.email = "A.N.Other@example.com"
     try:
         handle = Entrez.efetch(db="protein", id=idProtein, rettype='ipg', retmode='xml')
-        output = Entrez.read(handle)
-        proteinList = output['IPGReport']['ProteinList']
+        output = Entrez.read(handle, validate=False)
         result = []
-        if proteinList:
-            for indx in range(0, len(proteinList)):
-                result.append(proteinList[indx].attributes['accver'])
+        if 'IPGReport' in output:
+            ipgRep = output['IPGReport']
+            if 'ProteinList' in ipgRep:
+                proteinList = ipgRep['ProteinList']
+                if proteinList:
+                    for indx in range(0, len(proteinList)):
+                        result.append(proteinList[indx].attributes['accver'])
+            else:
+               raise Exception('No homologous sequence list found')
+        else:
+                raise Exception("The header of the query sequence was not found in Entrez")
         return result
-    except BaseException as err:
+    except Exception as err:
         if not isinstance(err, KeyboardInterrupt):
-            if err.reason.errno == -3:
+            if isinstance(err,OSError) and err.reason.errno == -3:
                 printAndLogCritical("ERROR: Internet connection error 💻🌐❌")
             else:
-                printAndLogCritical("ERROR: "+str(err.reason.strerror))
+                printAndLogCritical("ERROR: "+str(err))
         else:
             printAndLogCritical("Keyboard interrupt")
         sys.exit()
