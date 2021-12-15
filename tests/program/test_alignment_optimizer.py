@@ -94,6 +94,7 @@ def test_trim_start_sequences():
 
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(PURIFY_START,20)
+   variables_service.setVariableEnv(PURIFY_END,0)
 
    sequence_no_trimmed = currentAlignment[0].seq
    assert len(sequence_no_trimmed) == 246
@@ -134,31 +135,6 @@ def test_default_trim_value_is_zero():
    aligment_trim = functions.trimPurifyingSequences(currentAlignment, env_variables)
    sequence_trimmed = aligment_trim[0].seq
    assert len(sequence_no_trimmed) == 246
-
-
-
-def test_trimmed_sequences_added_homologous_sequences_improve_score():
-   #agregar que se agregue una homologa a la secuencia. ver scores 
-   currentAlignment = functions.loadFile('alignment.fasta')
-   query_sec_header = '6QA2_A'
-   hom_path = None
-   #busco cual es la secuencia con mayor candidad de gaps
-   query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
-
-   breakpoint()
-   env_variables = variables_service.getDictVariablesValues()
-   variables_service.setVariableEnv(PURIFY_START,20)
-   variables_service.setVariableEnv(PURIFY_END,20)
-   sequence_no_trimmed = currentAlignment[0].seq
-   score_with_out_trim = functions.generateAlignmentAndCalculateScore(currentAlignment, env_variables)   
-
-   breakpoint()
-
-   aligment_trim = functions.trimPurifyingSequences(currentAlignment, env_variables)
-   score_trimmed = functions.generateAlignmentAndCalculateScore(aligment_trim, env_variables)  
-   assert score_trimmed > score_with_out_trim
- 
-
 
 
 def homologousInCollection(sequenceCollection,homologousSeqCollection):
