@@ -5,13 +5,13 @@ import logging as log
 import argparse
 import sys
 
-from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN
+from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN, TEMP_DIR
 
 
 # ---------------------
 # Logs
 # ---------------------
-log.basicConfig(filename='alignment_optimizer.log', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
+log.basicConfig(filename=TEMP_DIR + '/alignment_optimizer.log', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
 
 
 # ---------------------
