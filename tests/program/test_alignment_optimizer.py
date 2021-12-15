@@ -2,16 +2,18 @@ import pytest
 from project_alignment_optimizer.program import variables_service
 from project_alignment_optimizer.program import functions
 from project_alignment_optimizer.program.constants import MIN_SEQUENCES,PURIFY_START,PURIFY_END,ADMIT_HOMOLOGOUS
-
+import dotenv
 
 
 def test_minimun_length_is_set():
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    breakpoint()
    #busco cual es la secuencia con mayor candidad de gaps
 
    env_variables = variables_service.getDictVariablesValues()
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
    variables_service.setVariableEnv(MIN_SEQUENCES,90)    
    mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
    haveEnoughtSequences = functions.alignmentHasNMinSequences(currentAlignment, env_variables)
@@ -21,6 +23,8 @@ def test_minimun_length_is_set():
 
 
 def test_search_query_sequence():
+    dotenv_file = dotenv.find_dotenv('config.env')
+    dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
     file = functions.loadFile('alignment.fasta')
     print('el header ' + '6QA2_A')
     query_seq = functions.find_alignment_by_header(file,'6QA2_A')
@@ -30,6 +34,8 @@ def test_search_query_sequence():
 
 def test_filter_aligment_with_more_amount_of_aacc():
    breakpoint()
+   dotenv_file = dotenv.find_dotenv('config.env')
+    
    #args = Namespace(file='alignment.fasta', homologous_sequences_path=None, query_sequence_header='6QA2_A')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
@@ -38,10 +44,10 @@ def test_filter_aligment_with_more_amount_of_aacc():
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,90)
-   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
-   variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,0)
-   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
 
+   variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,0)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variables
 
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    #busco la que más gaps tiene
@@ -57,6 +63,7 @@ def test_filter_aligment_with_more_amount_of_aacc():
 def test_filter_sequence_provides_most_gapped_doesnt_inject_homologous():
    #no se agrega una homologa porque no llega al minimo de secuencias
    breakpoint()
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -85,7 +92,7 @@ def test_filter_sequence_provides_most_gapped_doesnt_inject_homologous():
 def test_filter_sequence_most_gapped_inject_homologous():
    # se agrega una homologa porque llega al minimo de secuencias
    breakpoint()
-
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -93,7 +100,7 @@ def test_filter_sequence_most_gapped_inject_homologous():
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,93)
-   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variablesEQUENCES)
    variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,1)
    adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
    
@@ -115,6 +122,7 @@ def test_filter_sequence_most_gapped_inject_homologous():
    assert len(seqs_homologous_after_load)==1
 
 def test_trim_start_sequences():
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -123,8 +131,7 @@ def test_trim_start_sequences():
    breakpoint()
    variables_service.setVariableEnv(PURIFY_START,20)
    variables_service.setVariableEnv(PURIFY_END,0)
-   p_s = variables_service.getVariableIntEnv(PURIFY_START)
-   p_e = variables_service.getVariableIntEnv(PURIFY_END)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variablesEQUENCES)
    env_variables = variables_service.getDictVariablesValues()
 
    sequence_no_trimmed = currentAlignment[0].seq
@@ -135,6 +142,7 @@ def test_trim_start_sequences():
    assert len(sequence_trimmed) == 226
 
 def test_trim_start_and_end_sequences():
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -143,8 +151,8 @@ def test_trim_start_and_end_sequences():
 
    variables_service.setVariableEnv(PURIFY_START,20)
    variables_service.setVariableEnv(PURIFY_END,20)
-   p_s = variables_service.getVariableIntEnv(PURIFY_START)
-   p_e = variables_service.getVariableIntEnv(PURIFY_END)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variablesEQUENCES)
+   
    env_variables = variables_service.getDictVariablesValues()
    sequence_no_trimmed = currentAlignment[0].seq
    assert len(sequence_no_trimmed) == 246
@@ -155,6 +163,7 @@ def test_trim_start_and_end_sequences():
 
 
 def test_default_trim_value_is_zero():
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -171,13 +180,14 @@ def test_default_trim_value_is_zero():
 
 def test_after_first_filter_score_didn_improve_ramains_original_score():
    currentAlignment = functions.loadFile('alignment.fasta')
+   dotenv_file = dotenv.find_dotenv('config.env')
    query_sec_header = '6QA2_A'
    hom_path = None
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,93)
-   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variablesEQUENCES)
 
    ungappedSequences = functions.getUngappedSequences(currentAlignment)
    originalScore = functions.generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
@@ -193,17 +203,18 @@ def test_after_first_filter_score_didn_improve_ramains_original_score():
 
 
 def test_after_second_filter_didnt_admit_homolougous_score_didnt_improve():
+   dotenv_file = dotenv.find_dotenv('config.env')
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
+  
    variables_service.setVariableEnv(MIN_SEQUENCES,93)
    variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,0)
    
-   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
-   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+   dotenv.load_dotenv(dotenv_file, override=True) # Need to reload de os.env variablesEQUENCES)
 
    ungappedSequences = functions.getUngappedSequences(currentAlignment)
    originalScore = functions.generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
@@ -211,7 +222,7 @@ def test_after_second_filter_didnt_admit_homolougous_score_didnt_improve():
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    #busco la que más gaps tiene
    breakpoint()
-   sequence_with_most_gaps = functions.sequenceWithMostGaps(currentAlignment, query_seq, env_variables)
+   
    improve, alignmentFiltered, updatedScore =functions.executeSecondAlgorithm(currentAlignment, query_seq, homologousSequences, originalScore, env_variables)
    breakpoint()
    #valido que esa despues del primer filtrado no se encuentra 
