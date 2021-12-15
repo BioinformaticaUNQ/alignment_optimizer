@@ -34,8 +34,10 @@ def test_getDictVariablesValues():
     assert variables_service.getVariableIntEnv(PURIFY_END) == dictVariablesValues[PURIFY_END]
     assert variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS) == dictVariablesValues[ADMIT_HOMOLOGOUS]
     assert variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES) == dictVariablesValues[N_HOMOLOGOUS_SEQUENCES]
-    assert variables_service.getVariableIntEnv(GAPOPEN) == dictVariablesValues[GAPOPEN]
-    assert variables_service.getVariableIntEnv(GAPEXT) == dictVariablesValues[GAPEXT]
+
+    # FLOAT
+    assert variables_service.getVariableFloatEnv(GAPOPEN) == dictVariablesValues[GAPOPEN]
+    assert variables_service.getVariableFloatEnv(GAPEXT) == dictVariablesValues[GAPEXT]
 
     # STRING
     assert variables_service.getVariableStrEnv(MATRIX) == dictVariablesValues[MATRIX]
@@ -53,8 +55,10 @@ def test_getDictVariablesWithAllInfo():
     assert variables_service.getVariableIntEnv(PURIFY_END) == dictVariablesWithAllInfo[PURIFY_END]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS) == dictVariablesWithAllInfo[ADMIT_HOMOLOGOUS]['CURRENT_VALUE']
     assert variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES) == dictVariablesWithAllInfo[N_HOMOLOGOUS_SEQUENCES]['CURRENT_VALUE']
-    assert variables_service.getVariableIntEnv(GAPOPEN) == dictVariablesWithAllInfo[GAPOPEN]['CURRENT_VALUE']
-    assert variables_service.getVariableIntEnv(GAPEXT) == dictVariablesWithAllInfo[GAPEXT]['CURRENT_VALUE']
+
+    # FLOAT
+    assert variables_service.getVariableFloatEnv(GAPOPEN) == dictVariablesWithAllInfo[GAPOPEN]['CURRENT_VALUE']
+    assert variables_service.getVariableFloatEnv(GAPEXT) == dictVariablesWithAllInfo[GAPEXT]['CURRENT_VALUE']
 
     # STRING
     assert variables_service.getVariableStrEnv(MATRIX) == dictVariablesWithAllInfo[MATRIX]['CURRENT_VALUE']
@@ -117,8 +121,10 @@ def test_resetDefaultValues():
     old_purify_end_value = variables_service.getVariableIntEnv(PURIFY_END)
     old_admit_homologous_value = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
     old_n_homologous_sequences_value = variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES)
-    old_gapopen_value = variables_service.getVariableIntEnv(GAPOPEN)
-    old_gapext_value = variables_service.getVariableIntEnv(GAPEXT)
+
+    # FLOATS
+    old_gapopen_value = variables_service.getVariableFloatEnv(GAPOPEN)
+    old_gapext_value = variables_service.getVariableFloatEnv(GAPEXT)
 
     # STRING
     old_matrix_value = variables_service.getVariableStrEnv(MATRIX)
@@ -136,8 +142,10 @@ def test_resetDefaultValues():
     assert variables_service.getVariableIntEnv(PURIFY_END) == RESET_VALUES[PURIFY_END]
     assert variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS) == RESET_VALUES[ADMIT_HOMOLOGOUS]
     assert variables_service.getVariableIntEnv(N_HOMOLOGOUS_SEQUENCES) == RESET_VALUES[N_HOMOLOGOUS_SEQUENCES]
-    assert variables_service.getVariableIntEnv(GAPOPEN) == RESET_VALUES[GAPOPEN]
-    assert variables_service.getVariableIntEnv(GAPEXT) == RESET_VALUES[GAPEXT]
+    
+    # FLOATS
+    assert variables_service.getVariableFloatEnv(GAPOPEN) == RESET_VALUES[GAPOPEN]
+    assert variables_service.getVariableFloatEnv(GAPEXT) == RESET_VALUES[GAPEXT]
 
     # STRING
     assert variables_service.getVariableStrEnv(MATRIX) == RESET_VALUES[MATRIX]
@@ -332,3 +340,50 @@ def test_isValidHomologousSequencesPath_false():
     assert notIsValid == False
 
     variables_service.setVariableEnv(ADMIT_HOMOLOGOUS, old_admit_homologous_value)
+
+def test_validateInt_NoneOrEmpty_False():
+    NONE = None
+    EMPTY = ''
+
+    isValid, message = variables_service.validateInt(NONE)
+    assert isValid == False
+
+    isValid, message = variables_service.validateInt(EMPTY)
+    assert isValid == False
+
+def test_validateFloat_NoneOrEmpty_False():
+    NONE = None
+    EMPTY = ''
+
+    isValid, message = variables_service.validateFloat(NONE)
+    assert isValid == False
+
+    isValid, message = variables_service.validateFloat(EMPTY)
+    assert isValid == False
+
+def test_validatePositiveInt_NoneOrEmpty_False():
+    NONE = None
+    EMPTY = ''
+
+    isValid, message = variables_service.validatePositiveInt(NONE)
+    assert isValid == False
+
+    isValid, message = variables_service.validatePositiveInt(EMPTY)
+    assert isValid == False
+
+def test_validateTypeRange_NoneOrEmpty_False():
+    FAKE_VALUE = "FAKE_VALUE"
+    NONE = None
+    EMPTY = ''
+
+    isValid, message = variables_service.validateTypeRange(FAKE_VALUE, NONE)
+    assert isValid == False
+
+    isValid, message = variables_service.validateTypeRange(FAKE_VALUE, EMPTY)
+    assert isValid == False
+
+def test_getValueVariable_Not_Exist():
+    FAKE_VALUE = "FAKE_VALUE"
+    
+    data = variables_service.getValueVariable(FAKE_VALUE)
+    assert data == None
