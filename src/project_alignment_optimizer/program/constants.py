@@ -33,13 +33,13 @@ GAPEXT = "GAPEXT"
 GAPEXT_DESCRIPTION = "Defines Clustal's gap extension penalty."
 
 HOMOLOGOUS_SEQUENCES_PATH = 'HOMOLOGOUS_SEQUENCES_PATH'
-HOMOLOGOUS_SEQUENCES_PATH_DESCRIPTION = "Defines the path where the homologous sequences are found"
+HOMOLOGOUS_SEQUENCES_PATH_DESCRIPTION = "Defines the path where the homologous sequences are found."
 
 N_HOMOLOGOUS_SEQUENCES = "N_HOMOLOGOUS_SEQUENCES"
-N_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Defines the number of homologous sequences to use"
+N_HOMOLOGOUS_SEQUENCES_DESCRIPTION = "Defines the number of homologous sequences to use."
 
 ADMIT_HOMOLOGOUS = "ADMIT_HOMOLOGOUS"
-ADMIT_HOMOLOGOUS_DESCRIPTION = "Defines if agree to add homologous sequences to the alignment"
+ADMIT_HOMOLOGOUS_DESCRIPTION = "Defines if agree to add homologous sequences to the alignment, where: 0 -> NOT Admit, 1 -> Admit."
 ADMIT_HOMOLOGOUS_TYPE = {0: 'No', 1: 'Yes'}
 
 PURIFY_START = 'PURIFY_START'
