@@ -1,7 +1,7 @@
 import pytest
 from project_alignment_optimizer.program import variables_service
 from project_alignment_optimizer.program import functions
-from project_alignment_optimizer.program.constants import MIN_SEQUENCES,PURIFY_START,PURIFY_END
+from project_alignment_optimizer.program.constants import MIN_SEQUENCES,PURIFY_START,PURIFY_END,ADMIT_HOMOLOGOUS
 
 def test_search_query_sequence():
     file = functions.loadFile('alignment.fasta')
@@ -22,6 +22,10 @@ def test_filter_aligment_with_more_amount_of_aacc():
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,90)
    mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+   variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,0)
+   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+
+
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    #busco la que más gaps tiene
    sequence_with_most_gaps = functions.sequenceProvidesMostGaps(currentAlignment, query_seq)
@@ -39,6 +43,10 @@ def test_filter_sequence_provides_most_gapped_doesnt_inject_homologous():
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
+
+   variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,1)
+   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
@@ -60,6 +68,7 @@ def test_filter_sequence_provides_most_gapped_doesnt_inject_homologous():
 def test_filter_sequence_most_gapped_inject_homologous():
    # se agrega una homologa porque llega al minimo de secuencias
    breakpoint()
+
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -68,6 +77,9 @@ def test_filter_sequence_most_gapped_inject_homologous():
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,93)
    mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+   variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,1)
+   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
+   
    homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
    seqs_homologous_before_load= homologousInCollection(currentAlignment,homologousSequences)
 
@@ -163,7 +175,7 @@ def test_after_first_filter_score_didn_improve_ramains_original_score():
    assert originalScore == updatedScore
 
 
-def test_after_second_admit_homolougous_filter_score_improve_score():
+def test_after_second_filter_didnt_admit_homolougous_score_didnt_improve():
    currentAlignment = functions.loadFile('alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
@@ -171,6 +183,9 @@ def test_after_second_admit_homolougous_filter_score_improve_score():
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
    env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(MIN_SEQUENCES,93)
+   variables_service.setVariableEnv(ADMIT_HOMOLOGOUS,0)
+   
+   adm_hom = variables_service.getVariableIntEnv(ADMIT_HOMOLOGOUS)
    mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
 
    ungappedSequences = functions.getUngappedSequences(currentAlignment)
@@ -183,7 +198,7 @@ def test_after_second_admit_homolougous_filter_score_improve_score():
    improve, alignmentFiltered, updatedScore =functions.executeSecondAlgorithm(currentAlignment, query_seq, homologousSequences, originalScore, env_variables)
    breakpoint()
    #valido que esa despues del primer filtrado no se encuentra 
-   assert originalScore < updatedScore
+   assert originalScore == updatedScore
 
 def homologousInCollection(sequenceCollection,homologousSeqCollection):
    seq_hom_found =set()
