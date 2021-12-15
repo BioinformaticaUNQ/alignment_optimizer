@@ -83,6 +83,7 @@ TEMP_DIR = str(pathlib.Path(__file__).parent.resolve()) + "/temp"
 
 # Constants query
 QUERY_RUN_ALIGN = 'Are you sure you want to run the alignment with these settings?'
+QUERY_RUN_RESET = 'Are you sure you want to run the reset command?'
 VALID_QUERY_YES = {"yes": True, "y": True, '': True}
 NOT_VALID_QUERY_NO = {"no": False, "n": False}
 

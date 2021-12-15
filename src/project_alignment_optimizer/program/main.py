@@ -5,7 +5,7 @@ import logging as log
 import argparse
 import sys
 
-from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN, TEMP_DIR
+from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN, QUERY_RUN_RESET, TEMP_DIR
 
 
 # ---------------------
@@ -25,10 +25,11 @@ class AlignmentOptimazer(object):
             description='Description for AlignmentOptimazer',
             usage='''<command> [<args>]
 
-            Commands:
-            align           Run alignment code.
-            config          Configuration management.
-            view_config     View commands.
+ Commands:
+ align           Run alignment code.
+ config          Configuration management.
+ reset           Reset the config.env file to default.
+ view_config     View commands.
             ''')
 
         parser.add_argument('command', help='Subcommand to run')
@@ -67,25 +68,23 @@ class AlignmentOptimazer(object):
     def config(self):
         parser = argparse.ArgumentParser(description='Modify commands from the config.env file.')
 
-        parser.add_argument('-r', '--reset',
-                            type=bool,
-                            help='Reset the config.env file to default.',
-                            required=False)
-
         parser.add_argument('-k', '--key',
                             type=str,
                             help='Key from the config.env file.',
-                            required=False)
+                            required=True)
 
         parser.add_argument('-v', '--value',
                             help='Value for the key.',
-                            required=False)
+                            required=True)
 
         args = parser.parse_args(sys.argv[2:])
         _config(args)
     
     def view_config(self):
         _view_config()
+
+    def reset(self):
+        _reset_config()
 
 
 # ---------------------
@@ -113,18 +112,22 @@ def _align(args):
    
 
 def _config(args):
-    if args.reset:
-        variables_service.resetDefaultValues()
-        print('File config.env restored to default values.')
-    if args.key and args.value:
-        was_configured, message = variables_service.config_set_key_new_value(args)
-        print(message)
-        if not was_configured:
-            exit(1)
+    was_configured, message = variables_service.config_set_key_new_value(args)
+    print(message)
+    if not was_configured:
+        exit(1)
 
 
 def _view_config():
     print(variables_service.getAllVariablesTableWithDescription())
+
+def _reset_config():
+    # Pregunto si esta seguro que quiere ejecutar el comando reset.
+    if not func.query_yes_no(QUERY_RUN_RESET):
+        return
+
+    variables_service.resetDefaultValues()
+    print('File config.env restored to default values.')
        
 
 if __name__ == '__main__':
