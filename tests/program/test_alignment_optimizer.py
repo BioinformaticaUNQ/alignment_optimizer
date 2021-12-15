@@ -91,10 +91,10 @@ def test_trim_start_sequences():
    hom_path = None
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
-
-   env_variables = variables_service.getDictVariablesValues()
+   breakpoint()
    variables_service.setVariableEnv(PURIFY_START,20)
    variables_service.setVariableEnv(PURIFY_END,0)
+   env_variables = variables_service.getDictVariablesValues()
 
    sequence_no_trimmed = currentAlignment[0].seq
    assert len(sequence_no_trimmed) == 246
