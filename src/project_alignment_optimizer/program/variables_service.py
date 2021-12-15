@@ -21,8 +21,6 @@ def validateKey(key, value):
         return validateInt(value)
     elif key == MISMATCH:
         return validateInt(value)
-    elif key == GAP_PENALTY:
-        return validateInt(value)
     elif key == FILE_FORMAT:
         return validateTypeRange(key, value)
     elif key == MIN_SEQUENCES:
@@ -179,7 +177,6 @@ def isValidHomologousSequencesPath(args):
 def resetDefaultValues():
     setVariableEnv(MATCH, RESET_VALUES[MATCH])
     setVariableEnv(MISMATCH, RESET_VALUES[MISMATCH])
-    setVariableEnv(GAP_PENALTY, RESET_VALUES[GAP_PENALTY])
     setVariableEnv(FILE_FORMAT, RESET_VALUES[FILE_FORMAT])
     setVariableEnv(MIN_SEQUENCES, RESET_VALUES[MIN_SEQUENCES])
     setVariableEnv(DB_HOMOLOGOUS_SEQUENCES, RESET_VALUES[DB_HOMOLOGOUS_SEQUENCES])
