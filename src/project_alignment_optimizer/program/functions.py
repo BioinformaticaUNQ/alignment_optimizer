@@ -37,7 +37,7 @@ def executeFirstAlgorithm(lastAlignment, querySeq, homologousSequences, lastScor
     return executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, lastScore, env_variables)
 
 
-def excuteSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
+def executeSecondAlgorithm(lastAlignment, querySeq, homologousSequences, lastScore, env_variables):
     # Saco la secuencia que tenga mas gaps de todo el alineamiento
     # El tipo de filtrado es el 1
     alignmentFiltered = filterSequence(
@@ -156,7 +156,7 @@ def align(args, env_variables):
                 # Hago el segundo filtrado (Saco la secuencia que tenga mas gaps de todo el alineamiento)
                 printAndLogInfo("ALGORITHM 2 - Filter sequence with most gaps:")
                 # aca se caga, currentAligmnet no es un alineamiento sino secuencias sin gaps.
-                improve, currentAlignment, currentScore = excuteSecondAlgorithm(
+                improve, currentAlignment, currentScore = executeSecondAlgorithm(
                     copyLastAlignment, querySeq, homologousSequences, currentScore, env_variables)
                 querySeq = find_alignment_by_header(
                     currentAlignment, query_sequence_header)

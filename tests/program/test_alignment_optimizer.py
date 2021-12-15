@@ -94,6 +94,8 @@ def test_trim_start_sequences():
    breakpoint()
    variables_service.setVariableEnv(PURIFY_START,20)
    variables_service.setVariableEnv(PURIFY_END,0)
+   p_s = variables_service.getVariableIntEnv(PURIFY_START)
+   p_e = variables_service.getVariableIntEnv(PURIFY_END)
    env_variables = variables_service.getDictVariablesValues()
 
    sequence_no_trimmed = currentAlignment[0].seq
@@ -110,9 +112,11 @@ def test_trim_start_and_end_sequences():
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
 
-   env_variables = variables_service.getDictVariablesValues()
    variables_service.setVariableEnv(PURIFY_START,20)
    variables_service.setVariableEnv(PURIFY_END,20)
+   p_s = variables_service.getVariableIntEnv(PURIFY_START)
+   p_e = variables_service.getVariableIntEnv(PURIFY_END)
+   env_variables = variables_service.getDictVariablesValues()
    sequence_no_trimmed = currentAlignment[0].seq
    assert len(sequence_no_trimmed) == 246
    breakpoint()
@@ -136,6 +140,50 @@ def test_default_trim_value_is_zero():
    sequence_trimmed = aligment_trim[0].seq
    assert len(sequence_no_trimmed) == 246
 
+def test_after_first_filter_score_didn_improve_ramains_original_score():
+   currentAlignment = functions.loadFile('alignment.fasta')
+   query_sec_header = '6QA2_A'
+   hom_path = None
+   #busco cual es la secuencia con mayor candidad de gaps
+   query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
+   env_variables = variables_service.getDictVariablesValues()
+   variables_service.setVariableEnv(MIN_SEQUENCES,93)
+   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+
+   ungappedSequences = functions.getUngappedSequences(currentAlignment)
+   originalScore = functions.generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
+
+   homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
+   #busco la que más gaps tiene
+   breakpoint()
+   sequence_with_most_gaps = functions.sequenceProvidesMostGaps(currentAlignment, query_seq)
+   improve, alignmentFiltered, updatedScore =functions.executeFirstAlgorithm(currentAlignment, query_seq, homologousSequences, originalScore, env_variables)
+   breakpoint()
+   #valido que esa despues del primer filtrado no se encuentra 
+   assert originalScore == updatedScore
+
+
+def test_after_second_admit_homolougous_filter_score_improve_score():
+   currentAlignment = functions.loadFile('alignment.fasta')
+   query_sec_header = '6QA2_A'
+   hom_path = None
+   #busco cual es la secuencia con mayor candidad de gaps
+   query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
+   env_variables = variables_service.getDictVariablesValues()
+   variables_service.setVariableEnv(MIN_SEQUENCES,93)
+   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+
+   ungappedSequences = functions.getUngappedSequences(currentAlignment)
+   originalScore = functions.generateAlignmentAndCalculateScore(ungappedSequences, env_variables)
+
+   homologousSequences = functions.getHomologousSequences(query_seq, currentAlignment, env_variables,hom_path)
+   #busco la que más gaps tiene
+   breakpoint()
+   sequence_with_most_gaps = functions.sequenceWithMostGaps(currentAlignment, query_seq, env_variables)
+   improve, alignmentFiltered, updatedScore =functions.executeSecondAlgorithm(currentAlignment, query_seq, homologousSequences, originalScore, env_variables)
+   breakpoint()
+   #valido que esa despues del primer filtrado no se encuentra 
+   assert originalScore < updatedScore
 
 def homologousInCollection(sequenceCollection,homologousSeqCollection):
    seq_hom_found =set()
