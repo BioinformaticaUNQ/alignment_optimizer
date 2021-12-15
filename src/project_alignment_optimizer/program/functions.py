@@ -510,7 +510,7 @@ def getIdsHomologousSequences(idProtein):
                     for indx in range(0, len(proteinList)):
                         result.append(proteinList[indx].attributes['accver'])
             else:
-               raise Exception('No homologous sequence list found')
+                printAndLogInfo('Entrez did not return a list of homologous sequences')
         else:
                 raise Exception("The header of the query sequence was not found in Entrez")
         return result
