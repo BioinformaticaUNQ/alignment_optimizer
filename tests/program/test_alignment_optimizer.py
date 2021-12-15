@@ -3,6 +3,23 @@ from project_alignment_optimizer.program import variables_service
 from project_alignment_optimizer.program import functions
 from project_alignment_optimizer.program.constants import MIN_SEQUENCES,PURIFY_START,PURIFY_END,ADMIT_HOMOLOGOUS
 
+
+
+def test_minimun_length_is_set():
+   currentAlignment = functions.loadFile('alignment.fasta')
+   query_sec_header = '6QA2_A'
+   breakpoint()
+   #busco cual es la secuencia con mayor candidad de gaps
+
+   env_variables = variables_service.getDictVariablesValues()
+   variables_service.setVariableEnv(MIN_SEQUENCES,90)    
+   mi_seq = variables_service.getVariableIntEnv(MIN_SEQUENCES)
+   haveEnoughtSequences = functions.alignmentHasNMinSequences(currentAlignment, env_variables)
+   assert  haveEnoughtSequences
+
+
+
+
 def test_search_query_sequence():
     file = functions.loadFile('alignment.fasta')
     print('el header ' + '6QA2_A')
