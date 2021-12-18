@@ -9,21 +9,24 @@ from project_alignment_optimizer.program.constants import QUERY_RUN_ALIGN, QUERY
 
 
 # ---------------------
-# Logs
-# ---------------------
-log.basicConfig(filename=TEMP_DIR + '/alignment_optimizer.log', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
-
-
-# ---------------------
 # Programa Principal
 # ---------------------
 
 class AlignmentOptimazer(object):
 
     def __init__(self):
+
+        # Creamos el archivo temporal.
+        func.create_temp_file()
+
+        # ---------------------
+        # Logs
+        # ---------------------
+        log.basicConfig(filename=TEMP_DIR + '/alignment_optimizer.log', format='%(asctime)s - %(levelname)s: %(message)s', level=log.DEBUG)
+
         parser = argparse.ArgumentParser(
-            description='Description for AlignmentOptimazer',
-            usage='''<command> [<args>]
+        description='Description for AlignmentOptimazer',
+        usage='''<command> [<args>]
 
  Commands:
  align           Run alignment code.

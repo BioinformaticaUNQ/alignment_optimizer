@@ -4,7 +4,7 @@ from project_alignment_optimizer.program import functions
 from project_alignment_optimizer.program.constants import MIN_SEQUENCES
 
 def test_search_query_sequence():
-    file = functions.loadFile('alignment.fasta')
+    file = functions.loadFile('tests/fasta_file_examples/alignment.fasta')
     print('el header ' + '6QA2_A')
     query_seq = functions.find_alignment_by_header(file,'6QA2_A')
     print('la query_seq ' + str(query_seq))
@@ -14,7 +14,7 @@ def test_search_query_sequence():
 def test_filter_aligment_with_more_amount_of_aacc():
    breakpoint()
    #args = Namespace(file='alignment.fasta', homologous_sequences_path=None, query_sequence_header='6QA2_A')
-   currentAlignment = functions.loadFile('alignment.fasta')
+   currentAlignment = functions.loadFile('tests/fasta_file_examples/alignment.fasta')
    query_sec_header = '6QA2_A'
    hom_path = None
    #busco cual es la secuencia con mayor candidad de gaps
@@ -36,7 +36,7 @@ def test_filter_aligment_with_more_amount_of_aacc():
 def test_filter_sequence_most_gapped_doesnt_inject_homologous():
    #no se agrega una homologa porque no llega al minimo de secuencias
    breakpoint()
-   currentAlignment = functions.loadFile('alignment.fasta')
+   currentAlignment = functions.loadFile('tests/fasta_file_examples/alignment.fasta')
    query_sec_header = '6QA2_A'
    #busco cual es la secuencia con mayor candidad de gaps
    query_seq = functions.find_alignment_by_header(currentAlignment,query_sec_header)
@@ -64,7 +64,7 @@ def test_filter_sequence_most_gapped_doesnt_inject_homologous():
 def test_filter_sequence_most_gapped_inject_homologous():
    # se agrega una homologa porque llega al minimo de secuencias
    breakpoint()
-   currentAlignment = functions.loadFile('alignment.fasta')
+   currentAlignment = functions.loadFile('tests/fasta_file_examples/alignment.fasta')
    query_sec_header = '6QA2_A'
 
    #busco cual es la secuencia con mayor candidad de gaps

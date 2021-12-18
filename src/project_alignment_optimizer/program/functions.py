@@ -2,7 +2,7 @@
 
 from urllib.request import Request
 import Bio
-from project_alignment_optimizer.program.constants import CLUSTALW_PATH, TEMP_DIR, GAPEXT, GAPOPEN, HOMOLOGOUS_SEQUENCES_PATH, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
+from project_alignment_optimizer.program.constants import CLUSTALW_PATH, TEMP_DIR, GAPEXT, GAPOPEN, MATRIX, N_HOMOLOGOUS_SEQUENCES, ADMIT_HOMOLOGOUS, MATCH, MIN_SEQUENCES, MISMATCH, NOT_VALID_QUERY_NO, VALID_QUERY_YES, DB_HOMOLOGOUS_SEQUENCES, PURIFY_START, PURIFY_END
 from Bio import SeqIO, AlignIO, Align, Entrez, pairwise2, Phylo
 from Bio.Seq import Seq
 from Bio.Align.Applications import ClustalwCommandline
@@ -84,7 +84,6 @@ def executeAlgorithm(alignmentFiltered, lastAlignment, homologousSequences, last
                     return False, copyAl, lastScore
             else:
                 return False, copyAl, lastScore
-
 
 def align(args, env_variables):
 
@@ -435,12 +434,16 @@ def parseScore(aClustalOutputString):
 def generateAlignmentAndCalculateScore(originalSequences, env_variables):
     # Genero el nuevo alineamiento por medio de CLUSTAL
     SeqIO.write(originalSequences, (TEMP_DIR + "/seqs.fasta"), "fasta")
-    command = ClustalwCommandline(
-        CLUSTALW_PATH, infile=(TEMP_DIR + "/seqs.fasta"), gapopen=env_variables[GAPOPEN], gapext=env_variables[GAPEXT], matrix=env_variables[MATRIX])
-    clusalAlignmentOutput = command()
-    score = parseScore(clusalAlignmentOutput[0])
-    printAndLogInfo(f"New alignment Score: {score}")
-    return score
+    try:
+        command = ClustalwCommandline(
+            CLUSTALW_PATH, infile=(TEMP_DIR + "/seqs.fasta"), gapopen=env_variables[GAPOPEN], gapext=env_variables[GAPEXT], matrix=env_variables[MATRIX])
+        clusalAlignmentOutput = command()
+        score = parseScore(clusalAlignmentOutput[0])
+        printAndLogInfo(f"New alignment Score: {score}")
+        return score
+    except BaseException as err:
+        printAndLogCritical("ERROR: " + str(err))
+        sys.exit()
 
 
 def loadCurrentAlignment():
@@ -559,12 +562,20 @@ def exportFinalAlignment(bestAlignment, outputDir):
 
 
 def createOutputDir(inputPath, querySeq):
-    parent = str(pathlib.Path(inputPath).parent.resolve())
+    parent = str(pathlib.Path(__file__).parent.parent.parent.parent.resolve())
+    OUTPUT_PATH = "/OUTPUTS"
+
+    isExist = os.path.exists(parent + OUTPUT_PATH)
+    if not isExist:
+        os.makedirs(parent + OUTPUT_PATH)
+
+    # Limpiamos el nombre en el caso de que tenga '/' ej: MPVIND2009-KOL/1945/09
+    clean_querySeq = querySeq.replace("/", "_")
 
     inputName = str(pathlib.Path(inputPath).name).split(".")[0]
     timestamp = str(datetime.datetime.now())[:-7].replace(" ", "_")
-    folderName = "[" + timestamp + "]" + inputName + "-" + querySeq
-    folderPath = parent + "/" + folderName
+    folderName = "[" + timestamp + "]" + inputName + "-" + clean_querySeq
+    folderPath = parent + OUTPUT_PATH + "/" + folderName
     pathlib.Path(folderPath).mkdir()
 
     return folderPath
@@ -585,6 +596,14 @@ def query_yes_no(question):
         print("Please respond with 'yes' or 'no' " "(or 'y' or 'n').\n")
         query_yes_no(question)
 
+
+def create_temp_file():
+    parent = str(pathlib.Path(__file__).parent.resolve())
+    TEMP = "/temp"
+
+    isExist = os.path.exists(parent + TEMP)
+    if not isExist:
+        os.makedirs(parent + TEMP)
 
 def printAndLogInfo(msg):
     print(msg)
